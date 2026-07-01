@@ -3,35 +3,42 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>AI Agent Chat</title>
+<title>By Bobby Anggara</title>
 <link rel="stylesheet" href="style.css" />
 </head>
+
 <body>
-  <div class="app">
-    <aside class="sidebar">
-      <button id="newChatBtn" class="new-chat-btn">+ Obrolan Baru</button>
-      <div id="historyList" class="history-list"></div>
-    </aside>
 
-    <main class="chat-area">
-      <header class="chat-header">
-        <h1>AI Agent</h1>
-      </header>
+<div class="app">
 
-      <div id="messages" class="messages"></div>
+  <!-- BACKDROP -->
+  <div id="backdrop" class="backdrop"></div>
 
-      <form id="chatForm" class="chat-input-form">
-        <textarea
-          id="userInput"
-          placeholder="Tulis pesan Anda di sini..."
-          rows="1"
-          required
-        ></textarea>
-        <button type="submit" id="sendBtn">Kirim</button>
-      </form>
-    </main>
-  </div>
+  <!-- SIDEBAR -->
+  <aside id="sidebar" class="sidebar hidden">
+    <button id="newChatBtn" class="new-chat-btn">+ Obrolan Baru</button>
+    <div id="historyList" class="history-list"></div>
+  </aside>
 
-  <script src="app.js"></script>
+  <!-- CHAT -->
+  <main class="chat-area">
+
+    <header class="chat-header">
+      <button id="menuBtn" class="menu-btn">☰</button>
+      <h1>ObbyZone AI</h1>
+    </header>
+
+    <div id="messages" class="messages"></div>
+
+    <form id="chatForm" class="chat-input-form">
+      <textarea id="userInput" placeholder="Tulis pertanyaan..." rows="1"></textarea>
+      <button id="sendBtn">Kirim</button>
+    </form>
+
+  </main>
+
+</div>
+
+<script src="app.js"></script>
 </body>
 </html>
