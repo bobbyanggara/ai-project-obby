@@ -24,7 +24,7 @@ module.exports = async (req, res) => {
         Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
       },
       body: JSON.stringify({
-        model: process.env.GROQ_MODEL || 'openai/gpt-oss-120b',
+        model: process.env.GROQ_MODEL || 'groq/compound',
         messages: [{ role: 'system', content: finalSystemPrompt }, ...messages],
       }),
     });
