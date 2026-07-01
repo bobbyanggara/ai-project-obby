@@ -1,7 +1,7 @@
 // app.js
 // Logika frontend untuk AI Agent Chat
 
-const BACKEND_URL = 'http://localhost:3001/api/chat';
+const BACKEND_URL = 'https://ai-project-obby.vercel.app/api/chat';
 
 const messagesEl = document.getElementById('messages');
 const chatForm = document.getElementById('chatForm');
