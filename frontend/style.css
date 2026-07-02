@@ -206,12 +206,18 @@ body::before {
 }
 .text-btn.danger:hover { color: var(--danger); }
 
-.backdrop {
-  display: none;
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.5);
-  z-index: 20;
+.backdrop{
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.45);
+    z-index:20;
+    pointer-events:none;
+}
+
+.backdrop.show{
+    display:block;
+    pointer-events:auto;
 }
 .backdrop.show { display: block; }
 
@@ -796,4 +802,12 @@ html[data-theme="light"]{
   --accent-1:#2f80ff;
   --accent-2:#5b5eff;
   --accent-gradient:linear-gradient(135deg,#2f80ff,#5b5eff);
+}
+.sidebar{
+    z-index: 9999;
+}
+
+.new-chat-btn{
+    position: relative;
+    z-index: 10000;
 }
