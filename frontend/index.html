@@ -2,50 +2,91 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>By Bobby Anggara</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>OBBY AI</title>
 <link rel="manifest" href="./manifest.json">
-<meta name="theme-color" content="#0f0f10">
+<meta name="theme-color" content="#0B0E14">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css" />
 </head>
-
 <body>
 
-<div class="app">
-
-  <!-- BACKDROP -->
   <div id="backdrop" class="backdrop"></div>
 
-  <!-- SIDEBAR -->
-  <aside id="sidebar" class="sidebar hidden">
-    <button id="newChatBtn" class="new-chat-btn">+ Obrolan Baru</button>
-    <div id="historyList" class="history-list"></div>
-  </aside>
+  <div class="app">
+    <!-- SIDEBAR -->
+    <aside id="sidebar" class="sidebar">
+      <div class="sidebar-top">
+        <div class="brand">
+          <span class="brand-orb"></span>
+          <span class="brand-name">OBBY_AI</span>
+        </div>
+        <button id="closeSidebarBtn" class="icon-btn sidebar-close" aria-label="Tutup menu">✕</button>
+      </div>
 
-  <!-- CHAT -->
-  <main class="chat-area">
+      <button id="newChatBtn" class="new-chat-btn">
+        <span class="plus">+</span> Obrolan baru
+      </button>
 
-    <header class="chat-header">
-      <button id="menuBtn" class="menu-btn">☰</button>
-      <h1>ObbyZone AI</h1>
-    </header>
+      <div class="sidebar-label">Riwayat</div>
+      <div id="historyList" class="history-list"></div>
 
-    <div id="messages" class="messages"></div>
+      <div class="sidebar-footer">
+        <button id="clearAllBtn" class="text-btn danger">Hapus semua riwayat</button>
+      </div>
+    </aside>
 
-    <form id="chatForm" class="chat-input-form">
-      <textarea id="userInput" placeholder="Tulis pertanyaan..." rows="1"></textarea>
-      <button id="sendBtn">Kirim</button>
-    </form>
+    <!-- MAIN -->
+    <main class="chat-area">
+      <header class="chat-header">
+        <button id="menuBtn" class="icon-btn menu-btn" aria-label="Buka menu">
+          <span></span><span></span><span></span>
+        </button>
+        <h1 id="chatTitle">Obrolan baru</h1>
+        <button id="regenBtn" class="icon-btn" title="Ulangi jawaban terakhir" aria-label="Regenerate">↻</button>
+      </header>
 
-  </main>
+      <div id="messages" class="messages">
+        <div id="emptyState" class="empty-state">
+          <div class="empty-orb"></div>
+          <h2>Hai, mau bahas apa hari ini?</h2>
+          <p>Tanyakan apa saja — dari ide, perhitungan, sampai obrolan santai.</p>
+          <div class="suggestions" id="suggestions" data-suggestions="1">
+            <button class="suggestion-chip" data-text="Jelaskan konsep rekursi dengan analogi sederhana">Jelaskan rekursi dengan analogi</button>
+            <button class="suggestion-chip" data-text="Buatkan draft email izin kerja karena sakit">Draft email izin sakit</button>
+            <button class="suggestion-chip" data-text="Kasih ide 5 nama untuk aplikasi chat AI">Ide nama aplikasi</button>
+            <button class="suggestion-chip" data-text="Ringkas cara kerja fotosintesis singkat">Ringkas fotosintesis</button>
+          </div>
 
-</div>
+        </div>
+      </div>
 
-<script src="app.js"></script>
-<script>
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('./service-worker.js');
-}
-</script>
+      <div class="composer-wrap">
+        <form id="chatForm" class="chat-input-form">
+          <textarea
+            id="userInput"
+            placeholder="Kirim pesan..."
+            rows="1"
+            required
+          ></textarea>
+          <button type="submit" id="sendBtn" class="send-btn" aria-label="Kirim">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 12L20 4L13 20L11 13L4 12Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></svg>
+          </button>
+        </form>
+        <div class="composer-hint">Enter untuk kirim · Shift+Enter baris baru</div>
+      </div>
+    </main>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script src="app.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./service-worker.js');
+    }
+  </script>
 </body>
 </html>

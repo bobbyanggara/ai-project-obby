@@ -1,3 +1,4 @@
+require("dotenv").config();
 const express = require("express");
 const Groq = require("groq-sdk");
 require("dotenv").config();
@@ -12,6 +13,8 @@ const groq = new Groq({
 app.post("/api/chat", async (req, res) => {
   try {
     const userMessage = req.body.message;
+
+    console.log("Model yang digunakan :openai/gpt-oss-120b");
 
     const response = await groq.chat.completions.create({
       model: "openai/gpt-oss-120b",
