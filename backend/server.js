@@ -1,38 +1,23 @@
-require("dotenv").config();
-const express = require("express");
-const Groq = require("groq-sdk");
-require("dotenv").config();
+require('dotenv').config();
+const express = require('express');
+const cookieParser = require('cookie-parser');
 
 const app = express();
 app.use(express.json());
+app.use(cookieParser());
 
-const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY,
-});
+// Routes
+const chatHandler = require('./api/chat');
+const authHandler = require('./api/auth');
 
-app.post("/api/chat", async (req, res) => {
-  try {
-    const userMessage = req.body.message;
+// Auth endpoints
+app.post('/api/auth/:action', authHandler);
+app.get('/api/auth/:action', authHandler);
 
-    console.log("Model yang digunakan :openai/gpt-oss-120b");
-
-    const response = await groq.chat.completions.create({
-      model: "openai/gpt-oss-120b",
-      messages: [
-        { role: "user", content: userMessage }
-      ]
-    });
-
-    res.json({
-      reply: response.choices[0].message.content
-    });
-
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({ error: "Server error" });
-  }
-});
+// Chat endpoint (protected inside ./api/chat.js)
+app.post('/api/chat', chatHandler);
 
 app.listen(3001, () => {
-  console.log("Server running on port 3001");
-});	
+  console.log('Server running on port 3001');
+});
+

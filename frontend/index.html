@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>OBBY</title>
+<title>OBBY - Bobby Anggara</title>
 <link rel="manifest" href="./manifest.json">
 <meta name="theme-color" content="#060B18">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -28,13 +28,13 @@
       <div class="sidebar-top">
         <div class="brand">
           <span class="brand-mark"></span>
-          <span class="brand-name">OBBY</span>
+          <span class="brand-name">ObbyZone.</span>
         </div>
         <button id="closeSidebarBtn" class="icon-btn sidebar-close" aria-label="Close">✕</button>
       </div>
 
       <button id="newChatBtn" class="new-chat-btn glass-inset">
-        <span class="plus">+</span> <span data-i18n="newChat">Mulai obrolan baru</span>
+        <span class="plus">+</span> <span data-i18n="newChat">Obrolan baru</span>
       </button>
 
       <div class="sidebar-label" data-i18n="history">Riwayat</div>
@@ -47,9 +47,12 @@
             <span class="pill-icon moon">☾</span>
             <span class="pill-knob"></span>
           </button>
-          <button id="langToggle" class="lang-btn">ID</button>
+          <button id="langToggle" class="lang-btn" aria-label="Ganti bahasa" title="Ganti bahasa">ID/EN</button>
         </div>
+        <button id="clearPartialBtn" class="text-btn" aria-label="Hapus sebagian riwayat" title="Hapus sebagian riwayat (sisa 3 obrolan terbaru)">Hapus sebagian</button>
         <button id="clearAllBtn" class="text-btn danger" data-i18n="clearAll">Hapus semua riwayat</button>
+
+        <button id="logoutBtn" class="text-btn" style="display:none;" aria-label="Logout">Logout</button>
       </div>
     </aside>
 
@@ -59,6 +62,10 @@
         <button id="menuBtn" class="icon-btn menu-btn" aria-label="Menu">
           <span></span><span></span><span></span>
         </button>
+        <button id="sidebarOpenBtn" class="icon-btn sidebar-open-btn sidebar-open-btn" aria-label="Open sidebar">
+          ☰
+        </button>
+
         <h1 id="chatTitle" data-i18n="newChat">Obrolan baru</h1>
         <button id="regenBtn" class="icon-btn" title="Regenerate" aria-label="Regenerate">↻</button>
       </header>
@@ -68,12 +75,7 @@
           <div class="empty-mark"></div>
           <h2 data-i18n="emptyTitle">Halo, ada yang bisa dibantu?</h2>
           <p data-i18n="emptySubtitle">Tanyakan apa saja — dari ide, kode, sampai obrolan santai.</p>
-          <div class="suggestions" id="suggestions">
-            <button class="suggestion-chip glass-inset" data-id="Jelaskan konsep rekursi dengan analogi sederhana" data-en="Explain recursion with a simple analogy" data-i18n="sugg1">Jelaskan rekursi dengan analogi</button>
-            <button class="suggestion-chip glass-inset" data-id="Buatkan draft email izin kerja karena sakit" data-en="Draft a sick leave email" data-i18n="sugg2">Draft email izin sakit</button>
-            <button class="suggestion-chip glass-inset" data-id="Kasih ide 5 nama untuk aplikasi chat AI" data-en="Give me 5 name ideas for an AI chat app" data-i18n="sugg3">Ide nama aplikasi</button>
-            <button class="suggestion-chip glass-inset" data-id="Ringkas cara kerja fotosintesis singkat" data-en="Summarize how photosynthesis works" data-i18n="sugg4">Ringkas fotosintesis</button>
-          </div>
+          <div class="suggestions" id="suggestions"></div>
         </div>
       </div>
 
@@ -97,6 +99,40 @@
 
   <div id="toast" class="toast"></div>
 
+  <!-- Auth Modal -->
+  <div id="authModal" class="auth-modal" role="dialog" aria-modal="true" aria-labelledby="authModalTitle" style="display:none;">
+    <div class="auth-backdrop"></div>
+    <div class="auth-card glass">
+      <div class="auth-header">
+        <h2 id="authModalTitle">Login</h2>
+        <button id="authCloseBtn" class="icon-btn" aria-label="Close" style="width:34px;height:34px;">✕</button>
+      </div>
+
+      <div class="auth-tabs">
+        <button id="tabLoginBtn" class="auth-tab active" type="button">Login</button>
+        <button id="tabSignupBtn" class="auth-tab" type="button">Signup</button>
+      </div>
+
+      <form id="authForm" class="auth-form">
+        <div class="field">
+          <label for="authEmail" class="auth-label">Email</label>
+          <input id="authEmail" class="auth-input" type="email" autocomplete="email" required />
+        </div>
+        <div class="field">
+          <label for="authPassword" class="auth-label">Password</label>
+          <input id="authPassword" class="auth-input" type="password" autocomplete="current-password" required minlength="6" />
+          <div class="auth-help">Minimal 6 karakter.</div>
+        </div>
+        <button id="authSubmitBtn" class="auth-submit" type="submit">Login</button>
+        <div id="authError" class="auth-error" role="alert" style="display:none;"></div>
+      </form>
+
+      <div class="auth-footer">
+        <button id="authDemoHintBtn" class="text-btn" type="button">Saya sudah punya akun</button>
+      </div>
+    </div>
+  </div>
+
   <script src="app.js"></script>
   <script>
     if ('serviceWorker' in navigator) {
@@ -105,3 +141,4 @@
   </script>
 </body>
 </html>
+
