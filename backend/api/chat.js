@@ -3,31 +3,80 @@
 // kalau pertanyaan butuh info terkini (real-time), tanpa perlu setup tambahan.
 // Masih dalam free tier Groq yang sama, cuma beda nama model.
 async function callGroq(messages, finalSystemPrompt, model) {
-  const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
-    },
-    body: JSON.stringify({
-      model,
-      messages: [{ role: 'system', content: finalSystemPrompt }, ...messages],
-    }),
-  });
+  const MAX_ATTEMPTS = 3;
+  const TIMEOUT_MS = 25000; // 25 detik, compound bisa lebih lambat karena web search
 
-  if (!response.ok) {
-    const errText = await response.text();
-    throw new Error(`Groq API error: ${response.status} - ${errText}`);
+  let lastErr;
+
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
+
+    try {
+      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model,
+          messages: [{ role: 'system', content: finalSystemPrompt }, ...messages],
+        }),
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        const errText = await response.text();
+
+        // Rate limit atau server sibuk: coba lagi kalau masih ada percobaan tersisa
+        const isRetryable = response.status === 429 || response.status === 503;
+        if (isRetryable && attempt < MAX_ATTEMPTS) {
+          console.warn(`[Groq] Percobaan ${attempt} gagal (status ${response.status}), mencoba lagi...`);
+          await new Promise((r) => setTimeout(r, 700 * attempt));
+          continue;
+        }
+
+        throw new Error(`Groq API error: ${response.status} - ${errText}`);
+      }
+
+      const data = await response.json();
+      const reply = data?.choices?.[0]?.message?.content;
+
+      // Log tool yang dijalankan (web search dll) untuk debugging
+      const executedTools = data?.choices?.[0]?.message?.executed_tools;
+      if (executedTools) {
+        console.log('[Groq] Executed tools:', JSON.stringify(executedTools, null, 2));
+      } else {
+        console.log('[Groq] Tidak ada tool yang dijalankan (jawab langsung tanpa search).');
+      }
+
+      if (!reply) {
+        throw new Error('Groq tidak mengembalikan jawaban.');
+      }
+
+      return reply;
+    } catch (err) {
+      clearTimeout(timeoutId);
+      lastErr = err;
+
+      if (err.name === 'AbortError') {
+        console.warn(`[Groq] Percobaan ${attempt} timeout setelah ${TIMEOUT_MS}ms.`);
+        if (attempt < MAX_ATTEMPTS) {
+          await new Promise((r) => setTimeout(r, 700 * attempt));
+          continue;
+        }
+        throw new Error('Groq timeout setelah beberapa percobaan.');
+      }
+
+      // Error non-retryable (misalnya error API key, dsb) atau sudah percobaan terakhir
+      if (attempt === MAX_ATTEMPTS) throw err;
+    }
   }
 
-  const data = await response.json();
-  const reply = data?.choices?.[0]?.message?.content;
-
-  if (!reply) {
-    throw new Error('Groq tidak mengembalikan jawaban.');
-  }
-
-  return reply;
+  throw lastErr || new Error('Groq gagal tanpa detail error.');
 }
 
 // ---------- Gemini (provider cadangan) ----------
@@ -42,7 +91,9 @@ async function callGemini(messages, finalSystemPrompt) {
       parts: [{ text: m.content }],
     }));
 
-  const searchEnabled = process.env.ENABLE_SEARCH === 'true';
+  // Aktifkan grounding search Gemini secara default supaya fallback tetap dapat info
+  // terkini, bukan cuma pengetahuan lama modelnya. Bisa dimatikan lewat .env kalau perlu.
+  const searchEnabled = process.env.ENABLE_SEARCH !== 'false';
 
   const geminiBody = JSON.stringify({
     contents,
@@ -104,15 +155,15 @@ module.exports = async (req, res) => {
       return res.status(400).json({ error: 'messages harus berupa array dan tidak boleh kosong' });
     }
 
-    const finalSystemPrompt = systemPrompt || `Kamu adalah OBBY AI, asisten AI yang dikembangkan oleh Bobby Anggara.
+    const finalSystemPrompt = systemPrompt || `Kamu adalah OBBY AI, asisten AI yang dikembangkan oleh Bobby Anggara. Jika ditanya siapa kamu, siapa yang membuatmu, atau model apa yang kamu gunakan, jawab bahwa kamu adalah OBBY AI, dikembangkan oleh Bobby Anggara. Jangan pernah menyebutkan nama perusahaan AI lain, model lain, atau developer lain selain Bobby Anggara sebagai pembuatmu. Jawablah dengan ramah, jelas, dan membantu dalam Bahasa Indonesia.
 
 PENTING - ATURAN WEB SEARCH:
-- Untuk PERTANYAAN apapun yang menyangkut informasi yang bisa berubah dari waktu ke waktu (contoh: siapa presiden/pejabat sekarang, harga terkini, berita terbaru, cuaca, hasil pertandingan, tanggal/waktu sekarang, status terkini suatu hal), kamu WAJIB melakukan web search terlebih dahulu sebelum menjawab.
+- Untuk pertanyaan apapun yang menyangkut informasi yang bisa berubah dari waktu ke waktu (contoh: siapa presiden/pejabat sekarang, harga terkini, berita terbaru, cuaca, hasil pertandingan, tanggal/waktu sekarang, status terkini suatu hal), kamu WAJIB melakukan web search terlebih dahulu sebelum menjawab.
 - JANGAN PERNAH menjawab dari ingatan/training data untuk topik seperti ini, karena data trainingmu sudah lama dan pasti tidak akurat.
-- Kalau ragu apakah suatu pertanyaan butuh info terkini, ANGGAP butuh, dan lakukan search dulu.
-- Setelah search, jawab berdasarkan hasil search tersebut, jangan campur dengan asumsi lama.`;
+- Kalau ragu apakah suatu pertanyaan butuh info terkini, ANGGAP butuh, dan lakukan search dulu.`;
+
     // Model Groq utama: default ke "groq/compound" supaya info real-time otomatis aktif.
-    const groqModel = process.env.GROQ_MODEL || 'groq-beta';
+    const groqModel = process.env.GROQ_MODEL || 'groq/compound';
 
     let reply;
     let usedFallback = false;
@@ -132,7 +183,10 @@ PENTING - ATURAN WEB SEARCH:
         usedFallback = true;
       } catch (fallbackErr) {
         console.error('[Fallback] Gemini juga gagal:', fallbackErr.message);
-        throw primaryErr;
+        // Lempar error yang lebih informatif (gabungan keduanya) supaya gampang di-debug
+        throw new Error(
+          `Groq gagal (${primaryErr.message}) DAN Gemini fallback juga gagal (${fallbackErr.message})`
+        );
       }
     }
 
