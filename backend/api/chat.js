@@ -138,6 +138,86 @@ async function callGemini(messages, finalSystemPrompt) {
   return reply;
 }
 
+// ---------- OpenRouter (provider cadangan ke-2, 100% gratis) ----------
+// openrouter/free adalah router otomatis dari OpenRouter yang memilih
+// model gratis (:free) mana pun yang sedang tersedia. Tidak perlu kartu kredit.
+async function callOpenRouter(messages, finalSystemPrompt) {
+  const model = process.env.OPENROUTER_MODEL || 'openrouter/free';
+  const MAX_ATTEMPTS = 3;
+  const TIMEOUT_MS = 25000;
+
+  let lastErr;
+
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
+
+    try {
+      const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
+          // Header ini disarankan OpenRouter (tidak wajib, tapi membantu identifikasi trafik).
+          'HTTP-Referer': process.env.PUBLIC_APP_URL || 'https://ai-project-obby.vercel.app',
+          'X-Title': 'OBBY AI',
+        },
+        body: JSON.stringify({
+          model,
+          messages: [{ role: 'system', content: finalSystemPrompt }, ...messages],
+        }),
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        const errText = await response.text();
+
+        if (response.status === 429) {
+          throw new Error('OPENROUTER_RATE_LIMIT');
+        }
+
+        const isRetryable = response.status === 503;
+        if (isRetryable && attempt < MAX_ATTEMPTS) {
+          console.warn(`[OpenRouter] Percobaan ${attempt} gagal (status ${response.status}), mencoba lagi...`);
+          await new Promise((r) => setTimeout(r, 700 * attempt));
+          continue;
+        }
+
+        throw new Error(`OpenRouter API error: ${response.status} - ${errText}`);
+      }
+
+      const data = await response.json();
+      const reply = data?.choices?.[0]?.message?.content;
+
+      if (!reply) {
+        throw new Error('OpenRouter tidak mengembalikan jawaban.');
+      }
+
+      return reply;
+    } catch (err) {
+      clearTimeout(timeoutId);
+      lastErr = err;
+
+      if (err.message === 'OPENROUTER_RATE_LIMIT') throw err;
+
+      if (err.name === 'AbortError') {
+        console.warn(`[OpenRouter] Percobaan ${attempt} timeout setelah ${TIMEOUT_MS}ms.`);
+        if (attempt < MAX_ATTEMPTS) {
+          await new Promise((r) => setTimeout(r, 700 * attempt));
+          continue;
+        }
+        throw new Error('OpenRouter timeout setelah beberapa percobaan.');
+      }
+
+      if (attempt === MAX_ATTEMPTS) throw err;
+    }
+  }
+
+  throw lastErr || new Error('OpenRouter gagal tanpa detail error.');
+}
+
 // ---------- Handler utama ----------
 module.exports = async (req, res) => {
   const origin = req.headers.origin || '*';
@@ -190,7 +270,7 @@ Untuk pengetahuan umum yang stabil dan tidak berubah (misalnya definisi, sejarah
     const groqModel = process.env.GROQ_MODEL || 'groq/compound-mini';
 
     let reply;
-    let usedFallback = false;
+    let usedProvider = 'groq';
 
     try {
       // Provider utama: Groq Compound (punya web search bawaan)
@@ -198,27 +278,49 @@ Untuk pengetahuan umum yang stabil dan tidak berubah (misalnya definisi, sejarah
     } catch (primaryErr) {
       console.warn(`[Fallback] Groq gagal (${primaryErr.message}), coba Gemini sebagai cadangan...`);
 
-      if (!process.env.GEMINI_API_KEY) {
-        throw primaryErr;
+      let geminiErr = null;
+      if (process.env.GEMINI_API_KEY) {
+        try {
+          reply = await callGemini(messages, finalSystemPrompt);
+          usedProvider = 'gemini';
+        } catch (err) {
+          geminiErr = err;
+          console.warn(`[Fallback] Gemini juga gagal (${err.message}), coba OpenRouter sebagai cadangan terakhir...`);
+        }
+      } else {
+        console.warn('[Fallback] GEMINI_API_KEY tidak diset, lanjut coba OpenRouter...');
       }
 
-      try {
-        reply = await callGemini(messages, finalSystemPrompt);
-        usedFallback = true;
-      } catch (fallbackErr) {
-        console.error('[Fallback] Gemini juga gagal:', fallbackErr.message);
-        // Lempar error yang lebih informatif (gabungan keduanya) supaya gampang di-debug
-        throw new Error(
-          `Groq gagal (${primaryErr.message}) DAN Gemini fallback juga gagal (${fallbackErr.message})`
-        );
+      if (reply === undefined) {
+        if (!process.env.OPENROUTER_API_KEY) {
+          throw geminiErr || primaryErr;
+        }
+
+        try {
+          reply = await callOpenRouter(messages, finalSystemPrompt);
+          usedProvider = 'openrouter';
+        } catch (openRouterErr) {
+          console.error('[Fallback] OpenRouter juga gagal:', openRouterErr.message);
+
+          if (openRouterErr.message === 'OPENROUTER_RATE_LIMIT') {
+            throw openRouterErr;
+          }
+
+          // Lempar error gabungan dari ketiga provider supaya gampang di-debug
+          throw new Error(
+            `Groq gagal (${primaryErr.message})` +
+            (geminiErr ? ` DAN Gemini gagal (${geminiErr.message})` : '') +
+            ` DAN OpenRouter juga gagal (${openRouterErr.message})`
+          );
+        }
       }
     }
 
-    res.json({ reply, provider: usedFallback ? 'gemini' : 'groq' });
+    res.json({ reply, provider: usedProvider });
   } catch (err) {
     console.error('Error /api/chat:', err.message);
 
-    if (err.message === 'GEMINI_RATE_LIMIT') {
+    if (err.message === 'GEMINI_RATE_LIMIT' || err.message === 'OPENROUTER_RATE_LIMIT') {
       return res.status(429).json({
         error: 'OBBY AI sedang ramai dipakai. Coba lagi dalam 1 menit ya.',
       });
