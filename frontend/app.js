@@ -84,6 +84,127 @@ if (!localStorage.getItem('lang')) {
 
 function t(key) { return I18N[currentLang][key] || I18N.id[key] || key; }
 
+// ---------- Custom modal (replaces native alert/confirm/prompt) ----------
+function closeCustomModal(overlay) {
+  overlay.classList.remove('show');
+  setTimeout(() => overlay.remove(), 180);
+}
+
+function customConfirm(message, { danger = false } = {}) {
+  return new Promise((resolve) => {
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+
+    const card = document.createElement('div');
+    card.className = 'modal-card';
+
+    const msg = document.createElement('p');
+    msg.className = 'modal-message';
+    msg.textContent = message;
+
+    const actions = document.createElement('div');
+    actions.className = 'modal-actions';
+
+    const cancelBtn = document.createElement('button');
+    cancelBtn.type = 'button';
+    cancelBtn.className = 'modal-btn';
+    cancelBtn.textContent = currentLang === 'id' ? 'Batal' : 'Cancel';
+
+    const okBtn = document.createElement('button');
+    okBtn.type = 'button';
+    okBtn.className = danger ? 'modal-btn danger' : 'modal-btn primary';
+    okBtn.textContent = 'OK';
+
+    function finish(result) {
+      closeCustomModal(overlay);
+      document.removeEventListener('keydown', onKeydown);
+      resolve(result);
+    }
+    function onKeydown(e) {
+      if (e.key === 'Escape') finish(false);
+      if (e.key === 'Enter') finish(true);
+    }
+
+    cancelBtn.addEventListener('click', () => finish(false));
+    okBtn.addEventListener('click', () => finish(true));
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) finish(false); });
+    document.addEventListener('keydown', onKeydown);
+
+    actions.appendChild(cancelBtn);
+    actions.appendChild(okBtn);
+    card.appendChild(msg);
+    card.appendChild(actions);
+    overlay.appendChild(card);
+    document.body.appendChild(overlay);
+
+    requestAnimationFrame(() => {
+      overlay.classList.add('show');
+      okBtn.focus();
+    });
+  });
+}
+
+function customPrompt(message, defaultValue = '') {
+  return new Promise((resolve) => {
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+
+    const card = document.createElement('div');
+    card.className = 'modal-card';
+
+    const msg = document.createElement('p');
+    msg.className = 'modal-message';
+    msg.textContent = message;
+
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'modal-input';
+    input.value = defaultValue;
+
+    const actions = document.createElement('div');
+    actions.className = 'modal-actions';
+
+    const cancelBtn = document.createElement('button');
+    cancelBtn.type = 'button';
+    cancelBtn.className = 'modal-btn';
+    cancelBtn.textContent = currentLang === 'id' ? 'Batal' : 'Cancel';
+
+    const okBtn = document.createElement('button');
+    okBtn.type = 'button';
+    okBtn.className = 'modal-btn primary';
+    okBtn.textContent = 'OK';
+
+    function finish(result) {
+      closeCustomModal(overlay);
+      document.removeEventListener('keydown', onKeydown);
+      resolve(result);
+    }
+    function onKeydown(e) {
+      if (e.key === 'Escape') finish(null);
+      if (e.key === 'Enter') finish(input.value);
+    }
+
+    cancelBtn.addEventListener('click', () => finish(null));
+    okBtn.addEventListener('click', () => finish(input.value));
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) finish(null); });
+    document.addEventListener('keydown', onKeydown);
+
+    actions.appendChild(cancelBtn);
+    actions.appendChild(okBtn);
+    card.appendChild(msg);
+    card.appendChild(input);
+    card.appendChild(actions);
+    overlay.appendChild(card);
+    document.body.appendChild(overlay);
+
+    requestAnimationFrame(() => {
+      overlay.classList.add('show');
+      input.focus();
+      input.select();
+    });
+  });
+}
+
 function getGreetingByLocalTime(d = new Date()) {
   const hour = d.getHours();
   if (hour >= 5 && hour <= 10) return 'Selamat pagi';
@@ -279,8 +400,9 @@ function deleteConversation(id) {
   renderMessages();
 }
 
-clearAllBtn.addEventListener('click', () => {
-  if (!confirm(t('confirmClear'))) return;
+clearAllBtn.addEventListener('click', async () => {
+  const ok = await customConfirm(t('confirmClear'), { danger: true });
+  if (!ok) return;
   conversations = [];
   saveConversations();
   createNewConversation();
@@ -411,7 +533,7 @@ function showPartialDeleteModal() {
     if (e.target === overlay) overlay.remove();
   });
 
-  delBtn.addEventListener('click', () => {
+  delBtn.addEventListener('click', async () => {
     const idsToDelete = [];
     for (const [id, cb] of checks.entries()) {
       if (cb.checked) idsToDelete.push(id);
@@ -423,13 +545,13 @@ function showPartialDeleteModal() {
 
 
 
-    if (
-      !confirm(
-        currentLang === 'id'
-          ? `Hapus ${idsToDelete.length} obrolan terpilih? Tindakan ini tidak bisa dibatalkan.`
-          : `Delete ${idsToDelete.length} selected conversations? This cannot be undone.`
-      )
-    ) return;
+    const ok = await customConfirm(
+      currentLang === 'id'
+        ? `Hapus ${idsToDelete.length} obrolan terpilih? Tindakan ini tidak bisa dibatalkan.`
+        : `Delete ${idsToDelete.length} selected conversations? This cannot be undone.`,
+      { danger: true }
+    );
+    if (!ok) return;
 
 
     conversations = conversations.filter((c) => !idsToDelete.includes(c.id));
@@ -489,10 +611,11 @@ function createNewConversation(render = true) {
 newChatBtn.addEventListener('click', () => createNewConversation());
 
 // (Optional) Hapus sebagian riwayat dari keyboard: Ctrl+Backspace
-window.addEventListener('keydown', (e) => {
+window.addEventListener('keydown', async (e) => {
   if (e.ctrlKey && e.key === 'Backspace') {
     e.preventDefault();
-    if (!confirm(currentLang === 'id' ? 'Hapus sebagian riwayat? Menyisakan 3 obrolan terbaru.' : 'Delete part of the history? Keep the latest 3 conversations.')) return;
+    const ok = await customConfirm(currentLang === 'id' ? 'Hapus sebagian riwayat? Menyisakan 3 obrolan terbaru.' : 'Delete part of the history? Keep the latest 3 conversations.', { danger: true });
+    if (!ok) return;
     clearPartialConversations(3);
     showToast(currentLang === 'id' ? 'Riwayat sebagian dihapus' : 'Partial history deleted');
   }
@@ -749,11 +872,11 @@ if (starChatBtn) {
 }
 
 if (renameChatBtn) {
-  renameChatBtn.addEventListener('click', () => {
+  renameChatBtn.addEventListener('click', async () => {
     const conv = getCurrentConversation();
     closeTitleDropdown();
     if (!conv) return;
-    const newTitle = prompt(t('renamePrompt'), conv.title);
+    const newTitle = await customPrompt(t('renamePrompt'), conv.title);
     if (newTitle === null) return;
     const trimmed = newTitle.trim();
     if (!trimmed) return;
@@ -766,11 +889,12 @@ if (renameChatBtn) {
 }
 
 if (deleteChatBtn) {
-  deleteChatBtn.addEventListener('click', () => {
+  deleteChatBtn.addEventListener('click', async () => {
     const conv = getCurrentConversation();
     closeTitleDropdown();
     if (!conv) return;
-    if (!confirm(t('confirmDeleteChat'))) return;
+    const ok = await customConfirm(t('confirmDeleteChat'), { danger: true });
+    if (!ok) return;
     deleteConversation(conv.id);
     showToast(t('deletedChat'));
   });
