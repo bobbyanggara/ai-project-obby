@@ -33,6 +33,17 @@ const I18N = {
     deletedChat: 'Obrolan dihapus',
     starredChat: 'Obrolan diberi bintang',
     unstarredChat: 'Bintang dibatalkan',
+    tooltipMenu: 'Buka menu',
+    tooltipSidebarOpen: 'Buka sidebar',
+    tooltipSidebarClose: 'Tutup sidebar',
+    tooltipNewChat: 'Mulai obrolan baru',
+    tooltipTheme: 'Ganti tema terang/gelap',
+    tooltipLang: 'Ganti bahasa',
+    tooltipClearAll: 'Hapus semua riwayat obrolan',
+    tooltipChatOptions: 'Opsi obrolan',
+    tooltipRegen: 'Buat ulang jawaban',
+    tooltipSend: 'Kirim pesan',
+    tooltipScrollDown: 'Ke pesan terbaru',
     systemPrompt:
 'Kamu adalah OBBY AI, asisten AI yang ramah, jelas, dan membantu pengguna dalam Bahasa. Kamu dikembangkan oleh Bobby Anggara dan Partnernya Nadine Faradina Aulia, siswa SMK jurusan Rekayasa Perangkat Lunak, dengan partnernya Nadine Faradina Aulia sebagai proyek pribadi. PENTING: kamu PUNYA akses pencarian web real-time — gunakan untuk pertanyaan tentang hal yang bisa berubah (jabatan pejabat, berita terkini, harga, cuaca, hasil pertandingan, dll), jangan menjawab dari ingatan lama untuk topik semacam itu. Untuk pengetahuan umum yang tidak berubah, jawab langsung tanpa perlu mencari. Kamu dilarang menyebut dirimu sebagai ChatGPT, OpenAI, GPT, atau nama AI/perusahaan lain — kamu adalah OBBY AI, buatan Bobby Anggara.',
     errorPrefix: 'Maaf, terjadi kesalahan',
@@ -65,6 +76,17 @@ const I18N = {
     deletedChat: 'Chat deleted',
     starredChat: 'Chat starred',
     unstarredChat: 'Chat unstarred',
+    tooltipMenu: 'Open menu',
+    tooltipSidebarOpen: 'Open sidebar',
+    tooltipSidebarClose: 'Close sidebar',
+    tooltipNewChat: 'Start a new chat',
+    tooltipTheme: 'Toggle light/dark theme',
+    tooltipLang: 'Change language',
+    tooltipClearAll: 'Clear all chat history',
+    tooltipChatOptions: 'Chat options',
+    tooltipRegen: 'Regenerate response',
+    tooltipSend: 'Send message',
+    tooltipScrollDown: 'Jump to latest message',
     systemPrompt:
       'You are OBBY AI, a friendly and clear AI assistant that helps users in Bahasa. You were developed by Bobby Anggara—a vocational high school student majoring in Software Engineering—and his partner, Nadine Faradina Aulia, as a personal project. IMPORTANT: You HAVE access to real-time web search—use it for questions about things that change (official positions, breaking news, prices, weather, match results, etc.); do not answer from outdated memory for such topics. For general knowledge that does not change, answer directly without searching. You are prohibited from referring to yourself as ChatGPT, OpenAI, GPT, or any other AI or company name—you are OBBY AI, created by Bobby Anggara.'
   },
@@ -220,6 +242,9 @@ function applyI18n() {
   document.querySelectorAll('[data-i18n-placeholder]').forEach((el) => {
     el.placeholder = t(el.dataset.i18nPlaceholder);
   });
+  document.querySelectorAll('[data-i18n-tooltip]').forEach((el) => {
+    el.setAttribute('data-tooltip', t(el.dataset.i18nTooltip));
+  });
   langToggle.textContent = currentLang.toUpperCase();
   document.documentElement.lang = currentLang;
   document.querySelectorAll('.suggestion-chip').forEach((chip) => {
@@ -358,6 +383,7 @@ function renderMarkdown(text) {
 
 // ---------- History rendering ----------
 function renderHistory() {
+  closeHistoryMenuDropdown();
   historyList.innerHTML = '';
   // Tampilkan yang di-star paling atas, tanpa mengubah urutan asli di data (conversations tetap utuh urutan aslinya).
   const sortedConversations = [...conversations].sort((a, b) => {
@@ -374,11 +400,35 @@ function renderHistory() {
     label.className = 'label' + (conv.starred ? ' starred' : '');
     label.textContent = (conv.starred ? '★ ' : '') + conv.title;
     item.appendChild(label);
-    const del = document.createElement('span');
-    del.className = 'del';
-    del.textContent = '✕';
-    del.addEventListener('click', (e) => { e.stopPropagation(); deleteConversation(conv.id); });
-    item.appendChild(del);
+
+    // ---- Three-dot menu button (Star / Rename / Delete). The dropdown itself is a single
+    // shared floating element appended to <body> so it never gets clipped by the sidebar's
+    // overflow:hidden/auto containers. Its hover tooltip uses the same floating approach
+    // (see showFloatingTooltip) instead of the CSS [data-tooltip] system, since a CSS ::after
+    // tooltip here would get clipped by .history-item / .history-list overflow. ----
+    const itemMenuBtn = document.createElement('button');
+    itemMenuBtn.type = 'button';
+    itemMenuBtn.className = 'history-item-menu-btn';
+    itemMenuBtn.setAttribute('aria-haspopup', 'true');
+    itemMenuBtn.setAttribute('aria-expanded', 'false');
+    itemMenuBtn.setAttribute('aria-label', t('tooltipChatOptions'));
+    itemMenuBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>';
+
+    itemMenuBtn.addEventListener('mouseenter', () => showFloatingTooltip(itemMenuBtn, t('tooltipChatOptions')));
+    itemMenuBtn.addEventListener('mouseleave', hideFloatingTooltip);
+    itemMenuBtn.addEventListener('focus', () => showFloatingTooltip(itemMenuBtn, t('tooltipChatOptions')));
+    itemMenuBtn.addEventListener('blur', hideFloatingTooltip);
+
+    itemMenuBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      hideFloatingTooltip();
+      const wasOpenForThis = historyMenuOpenBtn === itemMenuBtn && historyMenuDropdown && historyMenuDropdown.classList.contains('open');
+      closeHistoryMenuDropdown();
+      if (!wasOpenForThis) openHistoryMenuDropdown(conv, itemMenuBtn);
+    });
+
+    item.appendChild(itemMenuBtn);
+
     item.addEventListener('click', () => {
       currentConvId = conv.id;
       renderHistory();
@@ -387,6 +437,138 @@ function renderHistory() {
     });
     historyList.appendChild(item);
   });
+}
+
+// ---------- Shared floating tooltip (for elements inside overflow:hidden/auto containers,
+// where a CSS [data-tooltip]::after would get clipped, e.g. the history item ⋮ button) ----------
+let floatingTooltipEl = null;
+
+function buildFloatingTooltip() {
+  if (floatingTooltipEl) return floatingTooltipEl;
+  const el = document.createElement('div');
+  el.className = 'floating-tooltip';
+  document.body.appendChild(el);
+  floatingTooltipEl = el;
+  return el;
+}
+
+function showFloatingTooltip(anchorEl, text) {
+  const el = buildFloatingTooltip();
+  el.textContent = text;
+  el.classList.add('show');
+  const rect = anchorEl.getBoundingClientRect();
+  const ttWidth = el.offsetWidth || 100;
+  const ttHeight = el.offsetHeight || 28;
+  let left = rect.left + rect.width / 2 - ttWidth / 2;
+  if (left < 8) left = 8;
+  if (left + ttWidth > window.innerWidth - 8) left = window.innerWidth - ttWidth - 8;
+  let top = rect.top - ttHeight - 8;
+  if (top < 8) top = rect.bottom + 8; // not enough room above: flip below
+  el.style.left = `${left}px`;
+  el.style.top = `${top}px`;
+}
+
+function hideFloatingTooltip() {
+  if (floatingTooltipEl) floatingTooltipEl.classList.remove('show');
+}
+
+// ---------- Shared floating dropdown for history item menu (Star / Rename / Delete) ----------
+let historyMenuDropdown = null;
+let historyMenuOpenBtn = null;
+
+function buildHistoryMenuDropdown() {
+  if (historyMenuDropdown) return historyMenuDropdown;
+  const dd = document.createElement('div');
+  dd.className = 'title-dropdown history-item-dropdown';
+  dd.setAttribute('role', 'menu');
+  dd.innerHTML = `
+    <button type="button" class="title-dropdown-item" data-action="star" role="menuitem">
+      <span class="tdi-icon"></span><span></span>
+    </button>
+    <button type="button" class="title-dropdown-item" data-action="rename" role="menuitem">
+      <span class="tdi-icon">✎</span><span></span>
+    </button>
+    <button type="button" class="title-dropdown-item danger" data-action="delete" role="menuitem">
+      <span class="tdi-icon">🗑</span><span></span>
+    </button>
+  `;
+  dd.addEventListener('click', (e) => e.stopPropagation());
+  document.body.appendChild(dd);
+  historyMenuDropdown = dd;
+  return dd;
+}
+
+function closeHistoryMenuDropdown() {
+  if (historyMenuDropdown) historyMenuDropdown.classList.remove('open');
+  if (historyMenuOpenBtn) {
+    historyMenuOpenBtn.classList.remove('open');
+    historyMenuOpenBtn.setAttribute('aria-expanded', 'false');
+  }
+  historyMenuOpenBtn = null;
+  hideFloatingTooltip();
+}
+
+function openHistoryMenuDropdown(conv, btn) {
+  closeTitleDropdown();
+  const dd = buildHistoryMenuDropdown();
+
+  const starBtn = dd.querySelector('[data-action="star"]');
+  const renameBtn = dd.querySelector('[data-action="rename"]');
+  const deleteBtn = dd.querySelector('[data-action="delete"]');
+
+  starBtn.querySelector('.tdi-icon').textContent = conv.starred ? '★' : '☆';
+  starBtn.querySelector('span:last-child').textContent = conv.starred ? t('unstarChat') : t('starChat');
+  renameBtn.querySelector('span:last-child').textContent = t('renameChat');
+  deleteBtn.querySelector('span:last-child').textContent = t('deleteChat');
+
+  starBtn.onclick = (e) => {
+    e.stopPropagation();
+    conv.starred = !conv.starred;
+    conv.starredAt = conv.starred ? Date.now() : null;
+    saveConversations();
+    if (conv.id === currentConvId) updateTitleDropdownLabels();
+    showToast(conv.starred ? t('starredChat') : t('unstarredChat'));
+    closeHistoryMenuDropdown();
+    renderHistory();
+  };
+  renameBtn.onclick = async (e) => {
+    e.stopPropagation();
+    closeHistoryMenuDropdown();
+    const newTitle = await customPrompt(t('renamePrompt'), conv.title);
+    if (newTitle === null) return;
+    const trimmed = newTitle.trim();
+    if (!trimmed) return;
+    conv.title = trimmed.slice(0, 60);
+    saveConversations();
+    if (conv.id === currentConvId) chatTitle.textContent = conv.title;
+    showToast(t('titleSaved'));
+    renderHistory();
+  };
+  deleteBtn.onclick = async (e) => {
+    e.stopPropagation();
+    closeHistoryMenuDropdown();
+    const ok = await customConfirm(t('confirmDeleteChat'), { danger: true });
+    if (!ok) return;
+    deleteConversation(conv.id);
+    showToast(t('deletedChat'));
+  };
+
+  // Position as fixed, anchored under the clicked button, clamped inside the viewport.
+  dd.classList.add('open');
+  const rect = btn.getBoundingClientRect();
+  const ddWidth = dd.offsetWidth || 178;
+  const ddHeight = dd.offsetHeight || 120;
+  let left = rect.right - ddWidth;
+  if (left < 8) left = 8;
+  if (left + ddWidth > window.innerWidth - 8) left = window.innerWidth - ddWidth - 8;
+  let top = rect.bottom + 6;
+  if (top + ddHeight > window.innerHeight - 8) top = rect.top - ddHeight - 6;
+  dd.style.left = `${left}px`;
+  dd.style.top = `${top}px`;
+
+  btn.classList.add('open');
+  btn.setAttribute('aria-expanded', 'true');
+  historyMenuOpenBtn = btn;
 }
 
 function deleteConversation(id) {
@@ -627,20 +809,13 @@ function scrollToBottom({ smooth = true } = {}) {
   messagesEl.scrollTo({ top: target, behavior: smooth ? 'smooth' : 'auto' });
 }
 
-// tombol panah ke bawah untuk manual “ke bawah” + set nearBottom
-const scrollDownBtn = document.createElement('button');
-scrollDownBtn.type = 'button';
-scrollDownBtn.id = 'scrollDownBtn';
-scrollDownBtn.className = 'scroll-down-btn';
-scrollDownBtn.setAttribute('aria-label', 'Scroll ke bawah');
-scrollDownBtn.textContent = '↓';
+// tombol panah ke bawah untuk manual "ke bawah" + set nearBottom
+const scrollDownBtn = document.getElementById('scrollDownBtn');
 scrollDownBtn.addEventListener('click', () => {
   scrollState.nearBottom = true;
   updateNearBottom();
   messagesEl.scrollTo({ top: messagesEl.scrollHeight, behavior: 'smooth' });
 });
-// Tombol ditempel sebagai child agar tidak memunculkan layout ganda di mobile
-messagesEl.appendChild(scrollDownBtn);
 
 messagesEl.addEventListener('scroll', () => {
   updateNearBottom();
@@ -816,10 +991,15 @@ if (chatTitle) {
 }
 document.addEventListener('click', (e) => {
   if (chatTitleWrap && !chatTitleWrap.contains(e.target)) closeTitleDropdown();
+  if (historyMenuDropdown && !historyMenuDropdown.contains(e.target) && !e.target.closest('.history-item-menu-btn')) {
+    closeHistoryMenuDropdown();
+  }
 });
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') closeTitleDropdown();
+  if (e.key === 'Escape') { closeTitleDropdown(); closeHistoryMenuDropdown(); }
 });
+window.addEventListener('resize', () => closeHistoryMenuDropdown());
+if (historyList) historyList.addEventListener('scroll', () => closeHistoryMenuDropdown());
 
 if (starChatBtn) {
   starChatBtn.addEventListener('click', () => {
