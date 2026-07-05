@@ -66,7 +66,24 @@
           ☰
         </button>
 
-        <h1 id="chatTitle" data-i18n="newChat">Obrolan baru</h1>
+        <div id="chatTitleWrap" class="chat-title-wrap">
+          <h1 id="chatTitle" data-i18n="newChat">Obrolan baru</h1>
+          <button id="titleMenuBtn" class="title-caret-btn" aria-haspopup="true" aria-expanded="false" aria-label="Opsi obrolan">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+
+          <div id="titleDropdown" class="title-dropdown" role="menu">
+            <button type="button" id="starChatBtn" class="title-dropdown-item" role="menuitem">
+              <span class="tdi-icon">☆</span><span id="starChatLabel">Beri bintang</span>
+            </button>
+            <button type="button" id="renameChatBtn" class="title-dropdown-item" role="menuitem">
+              <span class="tdi-icon">✎</span><span id="renameChatLabel">Ganti judul</span>
+            </button>
+            <button type="button" id="deleteChatBtn" class="title-dropdown-item danger" role="menuitem">
+              <span class="tdi-icon">🗑</span><span id="deleteChatLabel">Hapus obrolan</span>
+            </button>
+          </div>
+        </div>
         <button id="regenBtn" class="icon-btn" title="Regenerate" aria-label="Regenerate">↻</button>
       </header>
 

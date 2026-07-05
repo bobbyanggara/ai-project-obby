@@ -24,6 +24,15 @@ const I18N = {
     titleSaved: 'Judul disimpan',
     clearedAll: 'Semua riwayat dihapus',
     confirmClear: 'Hapus semua riwayat obrolan? Tindakan ini tidak bisa dibatalkan.',
+    starChat: 'Beri bintang',
+    unstarChat: 'Batal bintang',
+    renameChat: 'Ganti judul',
+    deleteChat: 'Hapus obrolan',
+    renamePrompt: 'Masukkan judul baru:',
+    confirmDeleteChat: 'Hapus obrolan ini? Tindakan ini tidak bisa dibatalkan.',
+    deletedChat: 'Obrolan dihapus',
+    starredChat: 'Obrolan diberi bintang',
+    unstarredChat: 'Bintang dibatalkan',
     systemPrompt:
 'Kamu adalah OBBY AI, asisten AI yang ramah, jelas, dan membantu pengguna dalam Bahasa. Kamu dikembangkan oleh Bobby Anggara dan Partnernya Nadine Faradina Aulia, siswa SMK jurusan Rekayasa Perangkat Lunak, dengan partnernya Nadine Faradina Aulia sebagai proyek pribadi. PENTING: kamu PUNYA akses pencarian web real-time — gunakan untuk pertanyaan tentang hal yang bisa berubah (jabatan pejabat, berita terkini, harga, cuaca, hasil pertandingan, dll), jangan menjawab dari ingatan lama untuk topik semacam itu. Untuk pengetahuan umum yang tidak berubah, jawab langsung tanpa perlu mencari. Kamu dilarang menyebut dirimu sebagai ChatGPT, OpenAI, GPT, atau nama AI/perusahaan lain — kamu adalah OBBY AI, buatan Bobby Anggara.',
     errorPrefix: 'Maaf, terjadi kesalahan',
@@ -47,6 +56,15 @@ const I18N = {
     titleSaved: 'Title saved',
     clearedAll: 'All history cleared',
     confirmClear: 'Clear all conversation history? This cannot be undone.',
+    starChat: 'Star chat',
+    unstarChat: 'Unstar chat',
+    renameChat: 'Rename title',
+    deleteChat: 'Delete chat',
+    renamePrompt: 'Enter a new title:',
+    confirmDeleteChat: 'Delete this chat? This cannot be undone.',
+    deletedChat: 'Chat deleted',
+    starredChat: 'Chat starred',
+    unstarredChat: 'Chat unstarred',
     systemPrompt:
       'You are OBBY AI, a friendly and clear AI assistant that helps users in Bahasa. You were developed by Bobby Anggara—a vocational high school student majoring in Software Engineering—and his partner, Nadine Faradina Aulia, as a personal project. IMPORTANT: You HAVE access to real-time web search—use it for questions about things that change (official positions, breaking news, prices, weather, match results, etc.); do not answer from outdated memory for such topics. For general knowledge that does not change, answer directly without searching. You are prohibited from referring to yourself as ChatGPT, OpenAI, GPT, or any other AI or company name—you are OBBY AI, created by Bobby Anggara.'
   },
@@ -88,6 +106,7 @@ function applyI18n() {
   });
   const conv = getCurrentConversation();
   chatTitle.textContent = conv && conv.title !== 'Obrolan baru' && conv.title !== 'New chat' ? conv.title : t('newChat');
+  updateTitleDropdownLabels();
 }
 
 function applyTheme(theme) {
@@ -111,6 +130,15 @@ const sendBtn = document.getElementById('sendBtn');
 const newChatBtn = document.getElementById('newChatBtn');
 const historyList = document.getElementById('historyList');
 const chatTitle = document.getElementById('chatTitle');
+const chatTitleWrap = document.getElementById('chatTitleWrap');
+const titleMenuBtn = document.getElementById('titleMenuBtn');
+const titleDropdown = document.getElementById('titleDropdown');
+const starChatBtn = document.getElementById('starChatBtn');
+const starChatLabel = document.getElementById('starChatLabel');
+const renameChatBtn = document.getElementById('renameChatBtn');
+const renameChatLabel = document.getElementById('renameChatLabel');
+const deleteChatBtn = document.getElementById('deleteChatBtn');
+const deleteChatLabel = document.getElementById('deleteChatLabel');
 const menuBtn = document.getElementById('menuBtn');
 const sidebarOpenBtn = document.getElementById('sidebarOpenBtn');
 const closeSidebarBtn = document.getElementById('closeSidebarBtn');
@@ -210,12 +238,20 @@ function renderMarkdown(text) {
 // ---------- History rendering ----------
 function renderHistory() {
   historyList.innerHTML = '';
-  conversations.forEach((conv) => {
+  // Tampilkan yang di-star paling atas, tanpa mengubah urutan asli di data (conversations tetap utuh urutan aslinya).
+  const sortedConversations = [...conversations].sort((a, b) => {
+    const aStar = a.starred ? 1 : 0;
+    const bStar = b.starred ? 1 : 0;
+    if (aStar !== bStar) return bStar - aStar; // starred duluan sebelum yang tidak
+    if (aStar === 1) return (b.starredAt || 0) - (a.starredAt || 0); // yang terbaru di-star di atas
+    return 0; // non-starred: pertahankan urutan asli (sort JS stabil)
+  });
+  sortedConversations.forEach((conv) => {
     const item = document.createElement('div');
     item.className = 'history-item' + (conv.id === currentConvId ? ' active' : '');
     const label = document.createElement('span');
-    label.className = 'label';
-    label.textContent = conv.title;
+    label.className = 'label' + (conv.starred ? ' starred' : '');
+    label.textContent = (conv.starred ? '★ ' : '') + conv.title;
     item.appendChild(label);
     const del = document.createElement('span');
     del.className = 'del';
@@ -651,6 +687,94 @@ regenBtn.addEventListener('click', async () => {
   renderMessages();
   await requestAIReply(conv);
 });
+
+// ---------- Title dropdown (Star / Rename / Delete) ----------
+function updateTitleDropdownLabels() {
+  const conv = getCurrentConversation();
+  const starred = !!(conv && conv.starred);
+  if (starChatLabel) starChatLabel.textContent = starred ? t('unstarChat') : t('starChat');
+  const starIcon = starChatBtn ? starChatBtn.querySelector('.tdi-icon') : null;
+  if (starIcon) starIcon.textContent = starred ? '★' : '☆';
+  if (renameChatLabel) renameChatLabel.textContent = t('renameChat');
+  if (deleteChatLabel) deleteChatLabel.textContent = t('deleteChat');
+}
+
+function openTitleDropdown() {
+  updateTitleDropdownLabels();
+  titleDropdown.classList.add('open');
+  titleMenuBtn.classList.add('open');
+  titleMenuBtn.setAttribute('aria-expanded', 'true');
+}
+function closeTitleDropdown() {
+  titleDropdown.classList.remove('open');
+  titleMenuBtn.classList.remove('open');
+  titleMenuBtn.setAttribute('aria-expanded', 'false');
+}
+function toggleTitleDropdown() {
+  if (titleDropdown.classList.contains('open')) closeTitleDropdown();
+  else openTitleDropdown();
+}
+
+if (titleMenuBtn) {
+  titleMenuBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    toggleTitleDropdown();
+  });
+}
+if (chatTitle) {
+  chatTitle.addEventListener('click', (e) => {
+    e.stopPropagation();
+    toggleTitleDropdown();
+  });
+}
+document.addEventListener('click', (e) => {
+  if (chatTitleWrap && !chatTitleWrap.contains(e.target)) closeTitleDropdown();
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') closeTitleDropdown();
+});
+
+if (starChatBtn) {
+  starChatBtn.addEventListener('click', () => {
+    const conv = getCurrentConversation();
+    if (!conv) return;
+    conv.starred = !conv.starred;
+    conv.starredAt = conv.starred ? Date.now() : null;
+    saveConversations();
+    renderHistory();
+    updateTitleDropdownLabels();
+    showToast(conv.starred ? t('starredChat') : t('unstarredChat'));
+    closeTitleDropdown();
+  });
+}
+
+if (renameChatBtn) {
+  renameChatBtn.addEventListener('click', () => {
+    const conv = getCurrentConversation();
+    closeTitleDropdown();
+    if (!conv) return;
+    const newTitle = prompt(t('renamePrompt'), conv.title);
+    if (newTitle === null) return;
+    const trimmed = newTitle.trim();
+    if (!trimmed) return;
+    conv.title = trimmed.slice(0, 60);
+    saveConversations();
+    chatTitle.textContent = conv.title;
+    renderHistory();
+    showToast(t('titleSaved'));
+  });
+}
+
+if (deleteChatBtn) {
+  deleteChatBtn.addEventListener('click', () => {
+    const conv = getCurrentConversation();
+    closeTitleDropdown();
+    if (!conv) return;
+    if (!confirm(t('confirmDeleteChat'))) return;
+    deleteConversation(conv.id);
+    showToast(t('deletedChat'));
+  });
+}
 
 // ---------- Form events ----------
 chatForm.addEventListener('submit', (e) => {
