@@ -27,23 +27,38 @@ module.exports = async (req, res) => {
       }));
 
     const model = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${process.env.GEMINI_API_KEY}`;
+    const geminiBody = JSON.stringify({
+      contents,
+      systemInstruction: { parts: [{ text: finalSystemPrompt }] },
+      tools: [{ google_search: {} }], // aktifkan pencarian real-time via Google Search
+    });
 
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${process.env.GEMINI_API_KEY}`,
-      {
+    // Retry otomatis khusus untuk error yang bersifat sementara dari server Gemini
+    // (503 = overload, 429 = rate limit). Percobaan ke-2 dan ke-3 diberi jeda (backoff)
+    // supaya tidak langsung menembak lagi saat server masih sibuk.
+    const MAX_ATTEMPTS = 3;
+    let response, lastErrText;
+
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+      response = await fetch(geminiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents,
-          systemInstruction: { parts: [{ text: finalSystemPrompt }] },
-          tools: [{ google_search: {} }], // aktifkan pencarian real-time via Google Search
-        }),
-      }
-    );
+        body: geminiBody,
+      });
 
-    if (!response.ok) {
-      const errText = await response.text();
-      throw new Error(`Gemini API error: ${response.status} - ${errText}`);
+      if (response.ok) break;
+
+      lastErrText = await response.text();
+      const isRetryable = response.status === 503 || response.status === 429;
+
+      if (!isRetryable || attempt === MAX_ATTEMPTS) {
+        throw new Error(`Gemini API error: ${response.status} - ${lastErrText}`);
+      }
+
+      // Backoff: tunggu 500ms, lalu 1000ms sebelum coba lagi
+      await new Promise((r) => setTimeout(r, 500 * attempt));
+      console.warn(`Percobaan ${attempt} gagal (status ${response.status}), mencoba lagi...`);
     }
 
     const data = await response.json();
