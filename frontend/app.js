@@ -533,7 +533,7 @@ function showPartialDeleteModal() {
     if (e.target === overlay) overlay.remove();
   });
 
-  delBtn.addEventListener('click', async () => {
+  delBtn.addEventListener('click', () => {
     const idsToDelete = [];
     for (const [id, cb] of checks.entries()) {
       if (cb.checked) idsToDelete.push(id);
@@ -542,17 +542,6 @@ function showPartialDeleteModal() {
     showToast(currentLang === 'id' ? 'Pilih minimal 1 obrolan' : 'Select at least 1 conversation');
     return;
 }
-
-
-
-    const ok = await customConfirm(
-      currentLang === 'id'
-        ? `Hapus ${idsToDelete.length} obrolan terpilih? Tindakan ini tidak bisa dibatalkan.`
-        : `Delete ${idsToDelete.length} selected conversations? This cannot be undone.`,
-      { danger: true }
-    );
-    if (!ok) return;
-
 
     conversations = conversations.filter((c) => !idsToDelete.includes(c.id));
 
