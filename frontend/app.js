@@ -427,46 +427,27 @@ function showPartialDeleteModal() {
   }
 
   const overlay = document.createElement('div');
-  overlay.style.position = 'fixed';
-  overlay.style.inset = '0';
-  overlay.style.background = 'rgba(0,0,0,0.55)';
-  overlay.style.display = 'flex';
-  overlay.style.alignItems = 'center';
-  overlay.style.justifyContent = 'center';
-  overlay.style.zIndex = '9999';
+  overlay.className = 'modal-overlay';
 
   const card = document.createElement('div');
-  card.style.width = 'min(520px, 92vw)';
+  card.className = 'modal-card';
+  card.style.width = 'min(480px, 100%)';
   card.style.maxHeight = '80vh';
   card.style.overflow = 'auto';
-  card.style.background = 'rgba(10, 14, 30, 0.95)';
-  card.style.border = '1px solid rgba(255,255,255,0.12)';
-  card.style.borderRadius = '14px';
-  card.style.padding = '16px';
-  card.style.color = 'white';
 
   const title = document.createElement('h3');
+  title.className = 'modal-title';
   title.textContent = currentLang === 'id' ? 'Hapus sebagian riwayat' : 'Delete part of history';
-
-  // If user toggles language while modal is open,
-  // keep modal labels in sync with currentLang.
   title.dataset.i18nPartialTitle = '1';
 
-
-  // Ensure modal texts are always in the current language.
-  // (currentLang is read at the time the modal is created.)
-  title.style.margin = '0 0 8px 0';
-
   const hint = document.createElement('p');
+  hint.className = 'modal-message';
   hint.textContent = currentLang === 'id' ? 'Centang obrolan yang ingin dihapus, lalu konfirmasi.' : 'Select the conversations to delete, then confirm.';
-  hint.style.margin = '0 0 12px 0';
-  hint.style.opacity = '0.85';
-  hint.style.fontSize = '14px';
 
   const list = document.createElement('div');
   list.style.display = 'grid';
   list.style.gap = '8px';
-  list.style.marginBottom = '12px';
+  list.style.marginBottom = '16px';
 
   const checks = new Map(); // conv.id -> checkbox
 
@@ -475,9 +456,10 @@ function showPartialDeleteModal() {
     row.style.display = 'flex';
     row.style.alignItems = 'center';
     row.style.gap = '10px';
-    row.style.padding = '8px 10px';
-    row.style.border = '1px solid rgba(255,255,255,0.10)';
-    row.style.borderRadius = '10px';
+    row.style.padding = '9px 12px';
+    row.style.border = '1px solid var(--glass-border)';
+    row.style.borderRadius = 'var(--radius-sm)';
+    row.style.background = 'var(--glass-bg)';
     row.style.cursor = 'pointer';
 
     const cb = document.createElement('input');
@@ -492,6 +474,8 @@ function showPartialDeleteModal() {
     name.style.whiteSpace = 'nowrap';
     name.style.overflow = 'hidden';
     name.style.textOverflow = 'ellipsis';
+    name.style.color = 'var(--text-primary)';
+    name.style.fontSize = '14px';
 
     row.appendChild(cb);
     txt.appendChild(name);
@@ -502,35 +486,21 @@ function showPartialDeleteModal() {
   });
 
   const actions = document.createElement('div');
-  actions.style.display = 'flex';
-  actions.style.gap = '10px';
-  actions.style.justifyContent = 'flex-end';
+  actions.className = 'modal-actions';
 
   const cancelBtn = document.createElement('button');
+  cancelBtn.type = 'button';
+  cancelBtn.className = 'modal-btn';
   cancelBtn.textContent = currentLang === 'id' ? 'Batal' : 'Cancel';
 
-  cancelBtn.type = 'button';
-  cancelBtn.style.padding = '10px 12px';
-  cancelBtn.style.borderRadius = '10px';
-  cancelBtn.style.border = '1px solid rgba(255,255,255,0.18)';
-  cancelBtn.style.background = 'transparent';
-  cancelBtn.style.color = 'white';
-  cancelBtn.style.cursor = 'pointer';
-
   const delBtn = document.createElement('button');
+  delBtn.type = 'button';
+  delBtn.className = 'modal-btn danger';
   delBtn.textContent = currentLang === 'id' ? 'Konfirmasi hapus' : 'Confirm delete';
 
-  delBtn.type = 'button';
-  delBtn.style.padding = '10px 12px';
-  delBtn.style.borderRadius = '10px';
-  delBtn.style.border = '1px solid rgba(255,80,80,0.35)';
-  delBtn.style.background = 'rgba(255,80,80,0.18)';
-  delBtn.style.color = '#fff';
-  delBtn.style.cursor = 'pointer';
-
-  cancelBtn.addEventListener('click', () => overlay.remove());
+  cancelBtn.addEventListener('click', () => closeCustomModal(overlay));
   overlay.addEventListener('click', (e) => {
-    if (e.target === overlay) overlay.remove();
+    if (e.target === overlay) closeCustomModal(overlay);
   });
 
   delBtn.addEventListener('click', () => {
@@ -555,7 +525,7 @@ function showPartialDeleteModal() {
     renderMessages();
     renderSuggestions();
 
-    overlay.remove();
+    closeCustomModal(overlay);
     showToast(currentLang === 'id' ? 'Riwayat sebagian dihapus' : 'Partial history deleted');
 
   });
@@ -568,8 +538,13 @@ function showPartialDeleteModal() {
   card.appendChild(list);
   card.appendChild(actions);
 
+
   overlay.appendChild(card);
   document.body.appendChild(overlay);
+
+  requestAnimationFrame(() => {
+    overlay.classList.add('show');
+  });
 }
 
 if (clearPartialBtn) {
