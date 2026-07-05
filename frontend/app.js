@@ -70,8 +70,7 @@ const I18N = {
 
 const LANG_CYCLE = ['id', 'en'];
 
-// Default language harus tetap Indonesia (ID).
-// Kalau localStorage berisi nilai lain, bisa disetel ulang ke 'id' bila format tidak valid.
+
 let currentLang = localStorage.getItem('lang') || 'id';
 if (!LANG_CYCLE.includes(currentLang)) currentLang = 'id';
 
@@ -91,8 +90,6 @@ function getGreetingByLocalTime(d = new Date()) {
   return 'Selamat malam';
 }
 
-
-
 function applyI18n() {
   document.querySelectorAll('[data-i18n]').forEach((el) => {
     el.textContent = t(el.dataset.i18n);
@@ -109,7 +106,6 @@ function applyI18n() {
   chatTitle.textContent = conv && conv.title !== 'Obrolan baru' && conv.title !== 'New chat' ? conv.title : t('newChat');
 }
 
-// ---------- Theme ----------
 function applyTheme(theme) {
   document.documentElement.setAttribute('data-theme', theme);
   localStorage.setItem('theme', theme);
