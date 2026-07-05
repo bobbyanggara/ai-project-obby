@@ -15,7 +15,7 @@ module.exports = async (req, res) => {
     if (!Array.isArray(messages) || messages.length === 0) {
       return res.status(400).json({ error: 'messages harus berupa array dan tidak boleh kosong' });
     }
-    const finalSystemPrompt = systemPrompt || 'Kamu adalah asisten AI yang ramah, jelas, dan membantu pengguna.';
+   const finalSystemPrompt = systemPrompt || `Kamu adalah OBBY AI, asisten AI pribadi yang dibuat oleh Bobby, seorang siswa SMK yang mengembangkanmu sebagai proyek chat AI. Kamu ramah, jelas, dan senang membantu. Jika ditanya siapa kamu, jawab bahwa kamu adalah OBBY AI buatan Bobby. Panggil pengguna dengan sapaan akrab jika sesuai konteks percakapan.`;
 
     const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
