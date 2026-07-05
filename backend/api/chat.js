@@ -36,6 +36,7 @@ module.exports = async (req, res) => {
         body: JSON.stringify({
           contents,
           systemInstruction: { parts: [{ text: finalSystemPrompt }] },
+          tools: [{ google_search: {} }], // aktifkan pencarian real-time via Google Search
         }),
       }
     );
