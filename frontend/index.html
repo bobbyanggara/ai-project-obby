@@ -43,8 +43,8 @@
       <div class="sidebar-footer">
         <div class="settings-row">
           <button id="themeToggle" class="pill-toggle" aria-label="Toggle theme">
-            <span class="pill-icon sun">☀</span>
-            <span class="pill-icon moon">☾</span>
+            <span class="pill-icon sun">☾</span>
+            <span class="pill-icon moon">☀</span>
             <span class="pill-knob"></span>
           </button>
           <button id="langToggle" class="lang-btn" aria-label="Ganti bahasa" title="Ganti bahasa">ID/EN</button>
@@ -99,40 +99,6 @@
 
   <div id="toast" class="toast"></div>
 
-  <!-- Auth Modal -->
-  <div id="authModal" class="auth-modal" role="dialog" aria-modal="true" aria-labelledby="authModalTitle" style="display:none;">
-    <div class="auth-backdrop"></div>
-    <div class="auth-card glass">
-      <div class="auth-header">
-        <h2 id="authModalTitle">Login</h2>
-        <button id="authCloseBtn" class="icon-btn" aria-label="Close" style="width:34px;height:34px;">✕</button>
-      </div>
-
-      <div class="auth-tabs">
-        <button id="tabLoginBtn" class="auth-tab active" type="button">Login</button>
-        <button id="tabSignupBtn" class="auth-tab" type="button">Signup</button>
-      </div>
-
-      <form id="authForm" class="auth-form">
-        <div class="field">
-          <label for="authEmail" class="auth-label">Email</label>
-          <input id="authEmail" class="auth-input" type="email" autocomplete="email" required />
-        </div>
-        <div class="field">
-          <label for="authPassword" class="auth-label">Password</label>
-          <input id="authPassword" class="auth-input" type="password" autocomplete="current-password" required minlength="6" />
-          <div class="auth-help">Minimal 6 karakter.</div>
-        </div>
-        <button id="authSubmitBtn" class="auth-submit" type="submit">Login</button>
-        <div id="authError" class="auth-error" role="alert" style="display:none;"></div>
-      </form>
-
-      <div class="auth-footer">
-        <button id="authDemoHintBtn" class="text-btn" type="button">Saya sudah punya akun</button>
-      </div>
-    </div>
-  </div>
-
   <script src="app.js"></script>
   <script>
     if ('serviceWorker' in navigator) {
@@ -141,4 +107,3 @@
   </script>
 </body>
 </html>
-

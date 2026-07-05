@@ -631,7 +631,7 @@ async function requestAIReply(conv) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         messages: conv.messages.map(({ role, content }) => ({ role, content })),
-        systemPrompt: t('systemPrompt'),
+       systemPrompt: t('systemPrompt'),
       }),
     });
 
