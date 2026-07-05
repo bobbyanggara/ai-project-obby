@@ -1,4 +1,4 @@
-/* ============ TOKENS ============ */
+/* ============ chatOKENS ============ */
 :root {
   --font-display: "Sora", sans-serif;
   --font-body: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
@@ -17,7 +17,7 @@
   --glass-border: rgba(255,255,255,0.14);
   --text-primary: #eaf0ff;
   --text-muted: #93a4c3;
-  --text-faint: #566180;
+  --text-faint: #9aa7c7;
   --accent-1: #3b82f6;
   --accent-2: #22d3ee;
   --accent-gradient: linear-gradient(135deg, #3b82f6 0%, #22d3ee 100%);
