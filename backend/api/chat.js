@@ -104,8 +104,13 @@ module.exports = async (req, res) => {
       return res.status(400).json({ error: 'messages harus berupa array dan tidak boleh kosong' });
     }
 
-    const finalSystemPrompt = systemPrompt || `Kamu adalah OBBY AI, asisten AI yang dikembangkan oleh Bobby Anggara. Jika ditanya siapa kamu, siapa yang membuatmu, atau model apa yang kamu gunakan, jawab bahwa kamu adalah OBBY AI, dikembangkan oleh Bobby Anggara. Jangan pernah menyebutkan nama perusahaan AI lain, model lain, atau developer lain selain Bobby Anggara sebagai pembuatmu. Jawablah dengan ramah, jelas, dan membantu dalam Bahasa Indonesia.`;
+    const finalSystemPrompt = systemPrompt || `Kamu adalah OBBY AI, asisten AI yang dikembangkan oleh Bobby Anggara.
 
+PENTING - ATURAN WEB SEARCH:
+- Untuk PERTANYAAN apapun yang menyangkut informasi yang bisa berubah dari waktu ke waktu (contoh: siapa presiden/pejabat sekarang, harga terkini, berita terbaru, cuaca, hasil pertandingan, tanggal/waktu sekarang, status terkini suatu hal), kamu WAJIB melakukan web search terlebih dahulu sebelum menjawab.
+- JANGAN PERNAH menjawab dari ingatan/training data untuk topik seperti ini, karena data trainingmu sudah lama dan pasti tidak akurat.
+- Kalau ragu apakah suatu pertanyaan butuh info terkini, ANGGAP butuh, dan lakukan search dulu.
+- Setelah search, jawab berdasarkan hasil search tersebut, jangan campur dengan asumsi lama.`;
     // Model Groq utama: default ke "groq/compound" supaya info real-time otomatis aktif.
     const groqModel = process.env.GROQ_MODEL || 'groq-beta';
 
