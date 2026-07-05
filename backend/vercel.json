@@ -1,0 +1,7 @@
+{
+  "functions": {
+    "backend/api/*.js": {
+      "maxDuration": 60S
+    }
+  }
+}
