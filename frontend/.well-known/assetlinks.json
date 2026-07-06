@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "com.bobbyanggara.obbyai",
+        "sha256_cert_fingerprints": ["F5:5A:22:53:09:6D:30:90:E5:D1:E8:15:85:02:AC:19:2E:C1:50:1A:25:C0:75:12:0D:56:53:1A:7C:AE:A6:75"]
+      }
+    }]
