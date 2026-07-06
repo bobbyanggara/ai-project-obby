@@ -1,7 +1,7 @@
 {
-  "name": "AI Agent Chat",
-  "short_name": "AI Chat",
-  "description": "Chat AI Agent seperti ChatGPT",
+  "name": "Obby AI",
+  "short_name": "Obby",
+  "description": "Chat AI Agent seperti Claude",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#0f0f10",
