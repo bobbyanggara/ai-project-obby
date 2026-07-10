@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Verifikasi Email — OBBY AI</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: #060B18;
+    color: #eee;
+    display: flex; align-items: center; justify-content: center;
+    min-height: 100vh; margin: 0; padding: 20px;
+  }
+  .card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    backdrop-filter: blur(20px);
+    padding: 36px 32px; border-radius: 20px; width: 340px;
+  }
+  .brand { font-weight: 700; letter-spacing: 2px; margin-bottom: 4px; }
+  h2 { margin: 0 0 8px; font-size: 20px; font-weight: 600; }
+  p.desc { color: #999; font-size: 13px; margin: 0 0 18px; line-height: 1.4; }
+  input {
+    width: 100%; padding: 12px 14px; margin: 6px 0; border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.12); background: rgba(0,0,0,0.3);
+    color: #eee; font-size: 22px; text-align: center; letter-spacing: 10px; font-weight: 700;
+  }
+  input:focus { outline: none; border-color: #7C9CFF; }
+  button {
+    width: 100%; padding: 12px; margin-top: 14px; border: none; border-radius: 10px;
+    background: linear-gradient(135deg, #7C9CFF, #B37CFF); color: white;
+    font-weight: 600; font-size: 14px; cursor: pointer;
+  }
+  button:disabled { opacity: 0.6; cursor: not-allowed; }
+  button.secondary { background: rgba(255,255,255,0.08); margin-top: 8px; }
+  #msg { margin-top: 12px; font-size: 13px; min-height: 18px; }
+  a { color: #9CB4FF; text-decoration: none; }
+  p.footer { margin-top: 16px; font-size: 13px; text-align: center; color: #999; }
+</style>
+</head>
+<body>
+  <form class="card" id="verifyForm">
+    <div class="brand">O B B Y</div>
+    <h2>Verifikasi Email</h2>
+    <p class="desc">Kode OTP sudah dikirim ke <strong id="emailShown"></strong>. Cek juga folder Spam kalau belum muncul.</p>
+    <input type="text" id="otpInput" placeholder="000000" maxlength="6" inputmode="numeric" required>
+    <button type="submit" id="verifyBtn">Verifikasi</button>
+    <button type="button" class="secondary" id="resendBtn">Kirim ulang kode</button>
+    <p id="msg"></p>
+    <p class="footer"><a href="login.html">← Kembali ke Login</a></p>
+  </form>
+
+<script src="auth.js"></script>
+<script>
+  const params = new URLSearchParams(window.location.search);
+  const email = params.get('email') || '';
+  document.getElementById('emailShown').textContent = email;
+
+  if (!email) {
+    document.getElementById('msg').style.color = '#FF6B6B';
+    document.getElementById('msg').textContent = 'Email tidak ditemukan, silakan daftar/login ulang.';
+  }
+
+  document.getElementById('verifyForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const msg = document.getElementById('msg');
+    const btn = document.getElementById('verifyBtn');
+    const otp = document.getElementById('otpInput').value;
+
+    btn.disabled = true;
+    msg.style.color = '#aaa';
+    msg.textContent = 'Memverifikasi...';
+
+    try {
+      const data = await ObbyAuth.verifyEmail({ email, otp });
+      ObbyAuth.setSession(data.token, data.user);
+      msg.style.color = '#6BFFB0';
+      msg.textContent = 'Berhasil! Mengalihkan ke chat...';
+      setTimeout(() => { window.location.href = 'index.html'; }, 800);
+    } catch (err) {
+      msg.style.color = '#FF6B6B';
+      msg.textContent = err.message;
+      btn.disabled = false;
+    }
+  });
+
+  document.getElementById('resendBtn').addEventListener('click', async () => {
+    const msg = document.getElementById('msg');
+    msg.style.color = '#aaa';
+    msg.textContent = 'Mengirim ulang...';
+    try {
+      await ObbyAuth.resendVerification(email);
+      msg.style.color = '#6BFFB0';
+      msg.textContent = 'Kode baru sudah dikirim.';
+    } catch (err) {
+      msg.style.color = '#FF6B6B';
+      msg.textContent = err.message;
+    }
+  });
+</script>
+</body>
+</html>

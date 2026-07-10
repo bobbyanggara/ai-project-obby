@@ -16,8 +16,12 @@
     return data;
   }
 
-  async function signup({ name, email, password }) {
-    return postJson('/api/signup', { name, email, password });
+  async function requestSignupOtp({ name, email, password }) {
+    return postJson('/api/signup/request-otp', { name, email, password });
+  }
+
+  async function verifySignupOtp({ email, otp }) {
+    return postJson('/api/signup/verify-otp', { email, otp });
   }
 
   async function login({ email, password }) {
@@ -99,7 +103,8 @@
 
   window.ObbyAuth = {
     API_BASE,
-    signup,
+    requestSignupOtp,
+    verifySignupOtp,
     login,
     logout,
     setSession,

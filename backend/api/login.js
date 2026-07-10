@@ -22,6 +22,10 @@ module.exports = async (req, res) => {
     const match = await bcrypt.compare(password, user.password_hash);
     if (!match) return res.status(401).json({ error: 'Email atau password salah' });
 
+    if (!user.email_verified) {
+      return res.status(403).json({ error: 'Email belum diverifikasi', needsVerification: true, email: user.email });
+    }
+
     const token = signToken({ id: user.id, email: user.email });
     res.json({ token, user: { id: user.id, email: user.email, name: user.name } });
   } catch (err) {
