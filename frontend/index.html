@@ -158,6 +158,51 @@
     color: #fff;
   }
   #logoutConfirmBtn:hover { opacity: 0.9; }
+
+  /* ---- Kartu info user (nama, email, avatar) ---- */
+  .user-info-box {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    margin-top: 8px;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+  .user-info-avatar {
+    flex-shrink: 0;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent-1, #7C9CFF), var(--accent-2, #B37CFF));
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 14px;
+    text-transform: uppercase;
+  }
+  .user-info-text {
+    min-width: 0;
+    flex: 1;
+  }
+  .user-info-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: #eee;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .user-info-email {
+    font-size: 11.5px;
+    color: #888;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 </style>
 </head>
 <body>
@@ -200,6 +245,14 @@
         </div>
         <button id="clearPartialBtn" class="text-btn" aria-label="Hapus sebagian riwayat" data-tooltip="Hapus sebagian riwayat obrolan">Hapus sebagian</button>
         <button id="clearAllBtn" class="text-btn danger" data-i18n="clearAll" data-i18n-tooltip="tooltipClearAll" data-tooltip="Hapus semua riwayat obrolan">Hapus semua riwayat</button>
+
+        <div id="userInfoBox" class="user-info-box" style="display:none;">
+          <div class="user-info-avatar" id="userInfoAvatar"></div>
+          <div class="user-info-text">
+            <div class="user-info-name" id="userInfoName"></div>
+            <div class="user-info-email" id="userInfoEmail"></div>
+          </div>
+        </div>
 
         <button id="loginNavBtn" class="auth-cta-btn" data-tooltip="Login untuk simpan riwayat ke akun" aria-label="Login">
           <svg class="auth-cta-icon" width="16" height="16" viewBox="0 0 24 24" fill="none">

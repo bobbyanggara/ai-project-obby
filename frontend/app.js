@@ -238,7 +238,7 @@ function getGreetingByLocalTime(d = new Date()) {
 const GREETING_EN_MAP = {
   'Selamat pagi': 'Good morning',
   'Selamat siang': 'Good afternoon',
-  'Selamat sore': 'Good afternoon',
+  'Selamat sore': 'Good evening',
   'Selamat malam': 'Good evening',
 };
 
@@ -317,6 +317,10 @@ const themeToggle = document.getElementById('themeToggle');
 const langToggle = document.getElementById('langToggle');
 const loginNavBtn = document.getElementById('loginNavBtn');
 const logoutBtn = document.getElementById('logoutBtn');
+const userInfoBox = document.getElementById('userInfoBox');
+const userInfoAvatar = document.getElementById('userInfoAvatar');
+const userInfoName = document.getElementById('userInfoName');
+const userInfoEmail = document.getElementById('userInfoEmail');
 
 // ---------- State ----------
 let conversations = JSON.parse(localStorage.getItem('conversations') || '[]');
@@ -347,9 +351,16 @@ function updateAuthUI(user) {
   if (user) {
     if (loginNavBtn) loginNavBtn.style.display = 'none';
     if (logoutBtn) logoutBtn.style.display = '';
+    if (userInfoBox) {
+      userInfoBox.style.display = 'flex';
+      if (userInfoAvatar) userInfoAvatar.textContent = currentUserName.charAt(0);
+      if (userInfoName) userInfoName.textContent = currentUserName;
+      if (userInfoEmail) userInfoEmail.textContent = user.email;
+    }
   } else {
     if (loginNavBtn) loginNavBtn.style.display = '';
     if (logoutBtn) logoutBtn.style.display = 'none';
+    if (userInfoBox) userInfoBox.style.display = 'none';
   }
 }
 
