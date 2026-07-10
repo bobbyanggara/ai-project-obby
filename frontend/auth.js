@@ -12,16 +12,16 @@
       body: JSON.stringify(body),
     });
     const data = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+    if (!res.ok) {
+      const err = new Error(data.error || `HTTP ${res.status}`);
+      Object.assign(err, data); // bawa field tambahan seperti needsVerification, email
+      throw err;
+    }
     return data;
   }
 
-  async function requestSignupOtp({ name, email, password }) {
-    return postJson('/api/signup/request-otp', { name, email, password });
-  }
-
-  async function verifySignupOtp({ email, otp }) {
-    return postJson('/api/signup/verify-otp', { email, otp });
+  async function signup({ name, email, password }) {
+    return postJson('/api/signup', { name, email, password });
   }
 
   async function login({ email, password }) {
@@ -34,6 +34,14 @@
 
   async function resetPassword({ email, otp, newPassword }) {
     return postJson('/api/reset-password', { email, otp, newPassword });
+  }
+
+  async function verifyEmail({ email, otp }) {
+    return postJson('/api/verify-email', { email, otp });
+  }
+
+  async function resendVerification(email) {
+    return postJson('/api/resend-verification', { email });
   }
 
   function setSession(token, user) {
@@ -103,8 +111,7 @@
 
   window.ObbyAuth = {
     API_BASE,
-    requestSignupOtp,
-    verifySignupOtp,
+    signup,
     login,
     logout,
     setSession,
@@ -115,5 +122,7 @@
     pushServerConversations,
     requestPasswordResetOtp,
     resetPassword,
+    verifyEmail,
+    resendVerification,
   };
 })();
