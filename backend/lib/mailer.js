@@ -13,18 +13,30 @@ const BREVO_API_KEY = process.env.BREVO_API_KEY;
 const SENDER_EMAIL = process.env.BREVO_SENDER_EMAIL;
 const SENDER_NAME = process.env.BREVO_SENDER_NAME || 'OBBY AI';
 
-async function sendOtpEmail(toEmail, otp) {
+const PURPOSE_TEXT = {
+  reset: {
+    subject: (otp) => `${otp} adalah kode reset password OBBY AI kamu`,
+    heading: 'Reset Password OBBY AI',
+    desc: 'Gunakan kode berikut untuk reset password kamu. Kode ini berlaku selama 10 menit.',
+  },
+  verify: {
+    subject: (otp) => `${otp} adalah kode verifikasi email OBBY AI kamu`,
+    heading: 'Verifikasi Email OBBY AI',
+    desc: 'Gunakan kode berikut untuk memverifikasi email akun kamu. Kode ini berlaku selama 10 menit.',
+  },
+};
+
+async function sendOtpEmail(toEmail, otp, purpose = 'reset') {
+  const t = PURPOSE_TEXT[purpose] || PURPOSE_TEXT.reset;
   const htmlContent = `
     <div style="font-family: sans-serif; max-width: 420px; margin: 0 auto; padding: 24px;">
-      <h2 style="color:#111;">Reset Password OBBY AI</h2>
-      <p style="color:#444; font-size: 14px;">
-        Gunakan kode berikut untuk reset password kamu. Kode ini berlaku selama 10 menit.
-      </p>
+      <h2 style="color:#111;">${t.heading}</h2>
+      <p style="color:#444; font-size: 14px;">${t.desc}</p>
       <div style="font-size: 32px; font-weight: 700; letter-spacing: 8px; background:#f4f4f7; padding: 16px; border-radius: 10px; text-align:center; margin: 20px 0;">
         ${otp}
       </div>
       <p style="color:#888; font-size: 12px;">
-        Kalau kamu tidak meminta reset password, abaikan email ini.
+        Kalau kamu tidak meminta ini, abaikan email ini.
       </p>
     </div>
   `;
@@ -39,7 +51,7 @@ async function sendOtpEmail(toEmail, otp) {
     body: JSON.stringify({
       sender: { name: SENDER_NAME, email: SENDER_EMAIL },
       to: [{ email: toEmail }],
-      subject: `${otp} adalah kode reset password OBBY AI kamu`,
+      subject: t.subject(otp),
       htmlContent,
     }),
   });
