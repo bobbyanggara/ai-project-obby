@@ -24,6 +24,14 @@
     return postJson('/api/login', { email, password });
   }
 
+  async function requestPasswordResetOtp(email) {
+    return postJson('/api/forgot-password', { email });
+  }
+
+  async function resetPassword({ email, otp, newPassword }) {
+    return postJson('/api/reset-password', { email, otp, newPassword });
+  }
+
   function setSession(token, user) {
     localStorage.setItem(TOKEN_KEY, token);
     localStorage.setItem(USER_KEY, JSON.stringify(user));
@@ -100,5 +108,7 @@
     verifySession,
     fetchServerConversations,
     pushServerConversations,
+    requestPasswordResetOtp,
+    resetPassword,
   };
 })();

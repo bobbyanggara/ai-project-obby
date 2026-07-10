@@ -16,14 +16,20 @@ app.use(express.static(path.join(__dirname, 'frontend')));
 
 // Routes
 const chatHandler = require('./api/chat');
-const { router: authRouter } = require('./api/auth');
-const conversationsRouter = require('./api/conversations');
+const signupHandler = require('./api/signup');
+const loginHandler = require('./api/login');
+const meHandler = require('./api/me');
+const conversationsHandler = require('./api/conversations');
+const forgotPasswordHandler = require('./api/forgot-password');
+const resetPasswordHandler = require('./api/reset-password');
 
-// Auth endpoints: /api/signup, /api/login, /api/me
-app.use('/api', authRouter);
-
-// Sinkronisasi riwayat chat (wajib login): GET & PUT /api/conversations
-app.use('/api/conversations', conversationsRouter);
+// Auth endpoints
+app.all('/api/signup', signupHandler);
+app.all('/api/login', loginHandler);
+app.all('/api/me', meHandler);
+app.all('/api/conversations', conversationsHandler);
+app.all('/api/forgot-password', forgotPasswordHandler);
+app.all('/api/reset-password', resetPasswordHandler);
 
 // Chat endpoint
 app.post('/api/chat', chatHandler);

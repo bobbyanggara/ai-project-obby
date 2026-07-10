@@ -34,6 +34,22 @@ async function initDb() {
     );
   `);
 
+  // OTP untuk fitur lupa password. otp_hash disimpan ter-hash (bukan plain text),
+  // sama seperti prinsip password. Satu baris per permintaan reset.
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS password_reset_otps (
+      id SERIAL PRIMARY KEY,
+      email TEXT NOT NULL,
+      otp_hash TEXT NOT NULL,
+      expires_at TIMESTAMP NOT NULL,
+      used BOOLEAN NOT NULL DEFAULT FALSE,
+      created_at TIMESTAMP DEFAULT NOW()
+    );
+  `);
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS idx_password_reset_otps_email ON password_reset_otps (email);
+  `);
+
   dbReady = true;
 }
 

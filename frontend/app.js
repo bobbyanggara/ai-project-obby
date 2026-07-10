@@ -235,6 +235,23 @@ function getGreetingByLocalTime(d = new Date()) {
   return 'Selamat malam';
 }
 
+const GREETING_EN_MAP = {
+  'Selamat pagi': 'Good morning',
+  'Selamat siang': 'Good afternoon',
+  'Selamat sore': 'Good evening',
+  'Selamat malam': 'Good evening',
+};
+
+let currentUserName = null; // null = guest, diisi setelah login berhasil divalidasi
+
+function updateGreetingText() {
+  const greetingId = getGreetingByLocalTime();
+  const greetingEn = GREETING_EN_MAP[greetingId] || 'Good evening';
+  const namePart = currentUserName ? `, ${currentUserName}` : '';
+  I18N.id.emptyTitle = `${greetingId}${namePart}, ada yang bisa dibantu?`;
+  I18N.en.emptyTitle = `${greetingEn}${namePart}, what can I help with?`;
+}
+
 function applyI18n() {
   document.querySelectorAll('[data-i18n]').forEach((el) => {
     el.textContent = t(el.dataset.i18n);
@@ -323,6 +340,10 @@ function getCurrentConversation() { return conversations.find((c) => c.id === cu
 
 // ---------- Auth UI & sinkronisasi awal ----------
 function updateAuthUI(user) {
+  currentUserName = user ? (user.name && user.name.trim() ? user.name.trim() : user.email.split('@')[0]) : null;
+  updateGreetingText();
+  applyI18n();
+
   if (user) {
     if (loginNavBtn) loginNavBtn.style.display = 'none';
     if (logoutBtn) logoutBtn.style.display = '';
@@ -337,11 +358,41 @@ if (loginNavBtn) {
 }
 if (logoutBtn) {
   logoutBtn.addEventListener('click', () => {
+    const backdrop = document.getElementById('logoutConfirmBackdrop');
+    if (backdrop) backdrop.classList.add('open');
+  });
+}
+
+const logoutBackdrop = document.getElementById('logoutConfirmBackdrop');
+const logoutCancelBtn = document.getElementById('logoutCancelBtn');
+const logoutConfirmBtn = document.getElementById('logoutConfirmBtn');
+
+function closeLogoutModal() {
+  if (logoutBackdrop) logoutBackdrop.classList.remove('open');
+}
+
+if (logoutCancelBtn) {
+  logoutCancelBtn.addEventListener('click', closeLogoutModal);
+}
+if (logoutBackdrop) {
+  // Klik di area gelap luar kartu juga menutup modal
+  logoutBackdrop.addEventListener('click', (e) => {
+    if (e.target === logoutBackdrop) closeLogoutModal();
+  });
+}
+if (logoutConfirmBtn) {
+  logoutConfirmBtn.addEventListener('click', () => {
     ObbyAuth.logout();
     updateAuthUI(null);
+    closeLogoutModal();
     showToast(currentLang === 'id' ? 'Berhasil logout' : 'Logged out');
   });
 }
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && logoutBackdrop && logoutBackdrop.classList.contains('open')) {
+    closeLogoutModal();
+  }
+});
 
 // Saat load: kalau ada token, cek valid ke server lalu tarik/merge riwayat chat.
 async function initAuthSync() {
@@ -389,15 +440,8 @@ langToggle.addEventListener('click', () => {
   currentLang = LANG_CYCLE[(idx + 1) % LANG_CYCLE.length];
   localStorage.setItem('lang', currentLang);
 
-  // Update greeting text based on current local time.
-  I18N.id.emptyTitle = `${getGreetingByLocalTime()}, ada yang bisa dibantu?`;
-  I18N.en.emptyTitle = `${getGreetingByLocalTime() === 'Selamat pagi'
-    ? 'Good morning'
-    : getGreetingByLocalTime() === 'Selamat siang'
-      ? 'Good afternoon'
-      : getGreetingByLocalTime() === 'Selamat sore'
-        ? 'Good evening'
-        : 'Good evening'}, what can I help with?`;
+  // Update greeting text based on current local time & nama user (kalau login).
+  updateGreetingText();
 
   // Update outer buttons immediately on language toggle.
 
@@ -1205,14 +1249,7 @@ if (conversations.length === 0) {
 }
 
 // Update greeting dinamis untuk empty state sesuai jam lokal (default saat pertama buka).
-I18N.id.emptyTitle = `${getGreetingByLocalTime()}, ada yang bisa dibantu?`;
-I18N.en.emptyTitle = `${getGreetingByLocalTime() === 'Selamat pagi'
-  ? 'Good morning'
-  : getGreetingByLocalTime() === 'Selamat siang'
-    ? 'Good afternoon'
-    : getGreetingByLocalTime() === 'Selamat sore'
-      ? 'Good evening'
-      : 'Good evening'}, what can I help with?`;
+updateGreetingText();
 
 // Pastikan greeting dipakai sejak pertama kali buka aplikasi (tanpa perlu interaksi).
 applyI18n();
