@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login — OBBY AI</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: #060B18;
+    color: #eee;
+    display: flex; align-items: center; justify-content: center;
+    min-height: 100vh; margin: 0; padding: 20px;
+  }
+  .card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    backdrop-filter: blur(20px);
+    padding: 36px 32px; border-radius: 20px; width: 340px;
+  }
+  .brand { font-weight: 700; letter-spacing: 2px; margin-bottom: 4px; }
+  h2 { margin: 0 0 20px; font-size: 20px; font-weight: 600; }
+  input {
+    width: 100%; padding: 12px 14px; margin: 6px 0; border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.12); background: rgba(0,0,0,0.3);
+    color: #eee; font-size: 14px;
+  }
+  input:focus { outline: none; border-color: #7C9CFF; }
+  button {
+    width: 100%; padding: 12px; margin-top: 14px; border: none; border-radius: 10px;
+    background: linear-gradient(135deg, #7C9CFF, #B37CFF); color: white;
+    font-weight: 600; font-size: 14px; cursor: pointer;
+  }
+  button:disabled { opacity: 0.6; cursor: not-allowed; }
+  #msg { margin-top: 12px; font-size: 13px; min-height: 18px; }
+  a { color: #9CB4FF; text-decoration: none; }
+  p.footer { margin-top: 16px; font-size: 13px; text-align: center; color: #999; }
+  .guest-link { display: block; text-align: center; margin-top: 10px; font-size: 13px; }
+</style>
+</head>
+<body>
+  <form class="card" id="loginForm">
+    <div class="brand">O B B Y</div>
+    <h2>Masuk ke akun</h2>
+    <input type="email" id="email" placeholder="Email" required>
+    <input type="password" id="password" placeholder="Password" required>
+    <button type="submit" id="submitBtn">Masuk</button>
+    <p id="msg"></p>
+    <p class="footer">Belum punya akun? <a href="signup.html">Daftar di sini</a></p>
+    <a class="guest-link" href="index.html">Lanjut tanpa akun →</a>
+  </form>
+
+<script src="auth.js"></script>
+<script>
+  document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const msg = document.getElementById('msg');
+    const btn = document.getElementById('submitBtn');
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+
+    btn.disabled = true;
+    msg.style.color = '#aaa';
+    msg.textContent = 'Memproses...';
+
+    try {
+      const data = await ObbyAuth.login({ email, password });
+      ObbyAuth.setSession(data.token, data.user);
+      msg.style.color = '#6BFFB0';
+      msg.textContent = 'Berhasil! Mengalihkan ke chat...';
+      setTimeout(() => { window.location.href = 'index.html'; }, 600);
+    } catch (err) {
+      msg.style.color = '#FF6B6B';
+      msg.textContent = err.message;
+      btn.disabled = false;
+    }
+  });
+</script>
+</body>
+</html>

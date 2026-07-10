@@ -298,14 +298,77 @@ const toastEl = document.getElementById('toast');
 const suggestionsEl = document.getElementById('suggestions');
 const themeToggle = document.getElementById('themeToggle');
 const langToggle = document.getElementById('langToggle');
+const loginNavBtn = document.getElementById('loginNavBtn');
+const logoutBtn = document.getElementById('logoutBtn');
 
 // ---------- State ----------
 let conversations = JSON.parse(localStorage.getItem('conversations') || '[]');
 let currentConvId = null;
 let isGenerating = false;
 
-function saveConversations() { localStorage.setItem('conversations', JSON.stringify(conversations)); }
+let syncTimer = null;
+function saveConversations() {
+  localStorage.setItem('conversations', JSON.stringify(conversations));
+
+  // Kalau user sedang login, sinkronkan juga ke server (di-debounce 1.2 detik
+  // biar tidak spam request tiap kali saveConversations() dipanggil).
+  if (window.ObbyAuth && ObbyAuth.getToken()) {
+    clearTimeout(syncTimer);
+    syncTimer = setTimeout(() => {
+      ObbyAuth.pushServerConversations(conversations);
+    }, 1200);
+  }
+}
 function getCurrentConversation() { return conversations.find((c) => c.id === currentConvId); }
+
+// ---------- Auth UI & sinkronisasi awal ----------
+function updateAuthUI(user) {
+  if (user) {
+    if (loginNavBtn) loginNavBtn.style.display = 'none';
+    if (logoutBtn) logoutBtn.style.display = '';
+  } else {
+    if (loginNavBtn) loginNavBtn.style.display = '';
+    if (logoutBtn) logoutBtn.style.display = 'none';
+  }
+}
+
+if (loginNavBtn) {
+  loginNavBtn.addEventListener('click', () => { window.location.href = 'login.html'; });
+}
+if (logoutBtn) {
+  logoutBtn.addEventListener('click', () => {
+    ObbyAuth.logout();
+    updateAuthUI(null);
+    showToast(currentLang === 'id' ? 'Berhasil logout' : 'Logged out');
+  });
+}
+
+// Saat load: kalau ada token, cek valid ke server lalu tarik/merge riwayat chat.
+async function initAuthSync() {
+  if (!window.ObbyAuth) return; // auth.js belum ke-load (mis. lupa disertakan)
+  const user = await ObbyAuth.verifySession();
+  updateAuthUI(user);
+  if (!user) return; // guest: tetap pakai localStorage seperti biasa
+
+  const serverConvs = await ObbyAuth.fetchServerConversations();
+  if (serverConvs === null) return; // gagal fetch, biarkan pakai localStorage dulu
+
+  if (serverConvs.length === 0 && conversations.length > 0) {
+    // Pertama kali login: belum ada apa-apa di server, upload riwayat guest yang ada.
+    await ObbyAuth.pushServerConversations(conversations);
+  } else {
+    // Merge sederhana: gabungkan lalu hilangkan duplikat berdasarkan id,
+    // data dari server jadi prioritas kalau id sama.
+    const merged = [...serverConvs];
+    const serverIds = new Set(serverConvs.map((c) => c.id));
+    conversations.forEach((c) => { if (!serverIds.has(c.id)) merged.push(c); });
+    conversations = merged;
+    saveConversations();
+    currentConvId = conversations.length ? conversations[0].id : null;
+    renderHistory();
+    renderMessages();
+  }
+}
 
 // ---------- Toast ----------
 let toastTimer;
@@ -1156,6 +1219,7 @@ applyI18n();
 renderHistory();
 renderMessages();
 renderSuggestions();
+initAuthSync();
 
 
 

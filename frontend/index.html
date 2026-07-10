@@ -52,6 +52,7 @@
         <button id="clearPartialBtn" class="text-btn" aria-label="Hapus sebagian riwayat" data-tooltip="Hapus sebagian riwayat obrolan">Hapus sebagian</button>
         <button id="clearAllBtn" class="text-btn danger" data-i18n="clearAll" data-i18n-tooltip="tooltipClearAll" data-tooltip="Hapus semua riwayat obrolan">Hapus semua riwayat</button>
 
+        <button id="loginNavBtn" class="text-btn" data-tooltip="Login untuk simpan riwayat ke akun" aria-label="Login">Login / Daftar</button>
         <button id="logoutBtn" class="text-btn" style="display:none;" data-tooltip="Keluar dari akun" aria-label="Logout">Logout</button>
       </div>
     </aside>
@@ -128,6 +129,7 @@
 
   <div id="toast" class="toast"></div>
 
+  <script src="auth.js"></script>
   <script src="app.js"></script>
   <script>
     if ('serviceWorker' in navigator) {

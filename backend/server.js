@@ -16,6 +16,14 @@ app.use(express.static(path.join(__dirname, 'frontend')));
 
 // Routes
 const chatHandler = require('./api/chat');
+const { router: authRouter } = require('./api/auth');
+const conversationsRouter = require('./api/conversations');
+
+// Auth endpoints: /api/signup, /api/login, /api/me
+app.use('/api', authRouter);
+
+// Sinkronisasi riwayat chat (wajib login): GET & PUT /api/conversations
+app.use('/api/conversations', conversationsRouter);
 
 // Chat endpoint
 app.post('/api/chat', chatHandler);
