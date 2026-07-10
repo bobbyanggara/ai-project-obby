@@ -238,7 +238,7 @@ function getGreetingByLocalTime(d = new Date()) {
 const GREETING_EN_MAP = {
   'Selamat pagi': 'Good morning',
   'Selamat siang': 'Good afternoon',
-  'Selamat sore': 'Good evening',
+  'Selamat sore': 'Good afternoon',
   'Selamat malam': 'Good evening',
 };
 

@@ -1,13 +1,20 @@
 // Ditaruh di lib/ (bukan api/) supaya TIDAK dianggap Vercel sebagai endpoint sendiri.
-const RESEND_API_KEY = process.env.RESEND_API_KEY;
+//
+// Kenapa Brevo (bukan Resend)? Resend butuh domain terverifikasi (DNS record) supaya
+// bisa kirim ke SEMUA email -- selama belum verifikasi domain, cuma bisa kirim ke
+// email akun Resend sendiri. Brevo cuma minta verifikasi 1 ALAMAT EMAIL TUNGGAL
+// (masukin kode 6 digit yang dikirim ke email itu, gak perlu DNS/domain), dan setelah
+// itu bisa kirim ke siapapun. Gratis 300 email/hari, selamanya, tanpa kartu kredit.
+const BREVO_API_KEY = process.env.BREVO_API_KEY;
 
-// Alamat default Resend, bisa dipakai tanpa perlu verifikasi domain sendiri.
-// Kalau nanti kamu punya domain sendiri yang sudah diverifikasi di Resend,
-// ganti FROM_EMAIL ke misalnya "OBBY AI <noreply@obbyai.com>".
-const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'OBBY AI <onboarding@resend.dev>';
+// Ganti dengan email yang sudah kamu verifikasi di dashboard Brevo
+// (Settings -> Senders, domains, IPs -> Senders -> Add a sender).
+// Boleh pakai email Gmail biasa, gak wajib domain sendiri.
+const SENDER_EMAIL = process.env.BREVO_SENDER_EMAIL;
+const SENDER_NAME = process.env.BREVO_SENDER_NAME || 'OBBY AI';
 
 async function sendOtpEmail(toEmail, otp) {
-  const html = `
+  const htmlContent = `
     <div style="font-family: sans-serif; max-width: 420px; margin: 0 auto; padding: 24px;">
       <h2 style="color:#111;">Reset Password OBBY AI</h2>
       <p style="color:#444; font-size: 14px;">
@@ -22,23 +29,24 @@ async function sendOtpEmail(toEmail, otp) {
     </div>
   `;
 
-  const res = await fetch('https://api.resend.com/emails', {
+  const res = await fetch('https://api.brevo.com/v3/smtp/email', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${RESEND_API_KEY}`,
+      Accept: 'application/json',
+      'api-key': BREVO_API_KEY,
     },
     body: JSON.stringify({
-      from: FROM_EMAIL,
-      to: [toEmail],
+      sender: { name: SENDER_NAME, email: SENDER_EMAIL },
+      to: [{ email: toEmail }],
       subject: `${otp} adalah kode reset password OBBY AI kamu`,
-      html,
+      htmlContent,
     }),
   });
 
   if (!res.ok) {
     const errText = await res.text();
-    throw new Error(`Resend API error: ${res.status} - ${errText}`);
+    throw new Error(`Brevo API error: ${res.status} - ${errText}`);
   }
 
   return res.json();

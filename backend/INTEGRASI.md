@@ -28,7 +28,7 @@ Ambil connection string mode **Pooled** (Neon) atau **Transaction** (Supabase) �
 ### 3. Environment Variables di Vercel
 Tambahkan di **Settings → Environment Variables**:
 - `DATABASE_URL` → connection string dari Neon/Supabase
-- `JWT_SECRET` → generate dengan `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`git 
+- `JWT_SECRET` → generate dengan `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`
 
 ### 4. Ganti `API_BASE` di `frontend/auth.js`
 Sudah saya set ke `https://ai-project-obby.vercel.app` (sama dengan `BACKEND_BASE_URL` di `app.js` kamu). Kalau URL Vercel kamu beda, sesuaikan di baris pertama `auth.js`.
