@@ -27,7 +27,7 @@ module.exports = async (req, res) => {
     }
 
     const token = signToken({ id: user.id, email: user.email });
-    res.json({ token, user: { id: user.id, email: user.email, name: user.name } });
+    res.json({ token, user: { id: user.id, email: user.email, name: user.name, nickname: user.nickname } });
   } catch (err) {
     console.error('Login error:', err);
     res.status(500).json({ error: 'Terjadi kesalahan server' });

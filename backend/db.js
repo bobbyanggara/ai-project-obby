@@ -24,6 +24,8 @@ async function initDb() {
   `);
   // Kalau tabel users sudah ada dari sebelumnya (belum punya kolom ini), tambahkan.
   await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified BOOLEAN NOT NULL DEFAULT FALSE;`);
+  // Nama panggilan (opsional, dipakai buat sapaan). "name" tetap dipakai sebagai nama lengkap.
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS nickname TEXT;`);
 
   // Simpan seluruh array "conversations" milik user sebagai satu JSONB blob.
   // Ini sengaja dibuat semirip mungkin dengan struktur yang sudah ada di

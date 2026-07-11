@@ -243,6 +243,7 @@ const GREETING_EN_MAP = {
 };
 
 let currentUserName = null; // null = guest, diisi setelah login berhasil divalidasi
+let currentUserObj = null; // objek user lengkap (id, email, name, nickname), buat isi form edit profil
 
 function updateGreetingText() {
   const greetingId = getGreetingByLocalTime();
@@ -344,7 +345,10 @@ function getCurrentConversation() { return conversations.find((c) => c.id === cu
 
 // ---------- Auth UI & sinkronisasi awal ----------
 function updateAuthUI(user) {
-  currentUserName = user ? (user.name && user.name.trim() ? user.name.trim() : user.email.split('@')[0]) : null;
+  currentUserObj = user;
+  currentUserName = user
+    ? ((user.nickname && user.nickname.trim()) || (user.name && user.name.trim()) || user.email.split('@')[0])
+    : null;
   updateGreetingText();
   applyI18n();
 
@@ -402,6 +406,69 @@ if (logoutConfirmBtn) {
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape' && logoutBackdrop && logoutBackdrop.classList.contains('open')) {
     closeLogoutModal();
+  }
+});
+
+// ---------- Modal edit profil ----------
+const editProfileBtn = document.getElementById('editProfileBtn');
+const editProfileBackdrop = document.getElementById('editProfileBackdrop');
+const editNameInput = document.getElementById('editNameInput');
+const editNicknameInput = document.getElementById('editNicknameInput');
+const editProfileMsg = document.getElementById('editProfileMsg');
+const editProfileCancelBtn = document.getElementById('editProfileCancelBtn');
+const editProfileSaveBtn = document.getElementById('editProfileSaveBtn');
+
+function openEditProfileModal() {
+  if (!currentUserObj) return;
+  editNameInput.value = currentUserObj.name || '';
+  editNicknameInput.value = currentUserObj.nickname || '';
+  editProfileMsg.textContent = '';
+  if (editProfileBackdrop) editProfileBackdrop.classList.add('open');
+}
+function closeEditProfileModal() {
+  if (editProfileBackdrop) editProfileBackdrop.classList.remove('open');
+}
+
+if (editProfileBtn) editProfileBtn.addEventListener('click', openEditProfileModal);
+if (editProfileCancelBtn) editProfileCancelBtn.addEventListener('click', closeEditProfileModal);
+if (editProfileBackdrop) {
+  editProfileBackdrop.addEventListener('click', (e) => {
+    if (e.target === editProfileBackdrop) closeEditProfileModal();
+  });
+}
+if (editProfileSaveBtn) {
+  editProfileSaveBtn.addEventListener('click', async () => {
+    const name = editNameInput.value.trim();
+    const nickname = editNicknameInput.value.trim();
+
+    if (!name) {
+      editProfileMsg.style.color = '#FF6B6B';
+      editProfileMsg.textContent = 'Nama lengkap tidak boleh kosong';
+      return;
+    }
+
+    editProfileSaveBtn.disabled = true;
+    editProfileMsg.style.color = '#aaa';
+    editProfileMsg.textContent = 'Menyimpan...';
+
+    try {
+      const data = await ObbyAuth.updateProfile({ name, nickname });
+      ObbyAuth.setSession(ObbyAuth.getToken(), data.user);
+      updateAuthUI(data.user);
+      editProfileMsg.style.color = '#6BFFB0';
+      editProfileMsg.textContent = 'Berhasil disimpan!';
+      setTimeout(closeEditProfileModal, 700);
+    } catch (err) {
+      editProfileMsg.style.color = '#FF6B6B';
+      editProfileMsg.textContent = err.message;
+    } finally {
+      editProfileSaveBtn.disabled = false;
+    }
+  });
+}
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && editProfileBackdrop && editProfileBackdrop.classList.contains('open')) {
+    closeEditProfileModal();
   }
 });
 

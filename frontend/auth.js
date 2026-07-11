@@ -44,6 +44,21 @@
     return postJson('/api/resend-verification', { email });
   }
 
+  async function updateProfile({ name, nickname }) {
+    const token = getToken();
+    const res = await fetch(`${API_BASE}/api/update-profile`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ name, nickname }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+    return data;
+  }
+
   function setSession(token, user) {
     localStorage.setItem(TOKEN_KEY, token);
     localStorage.setItem(USER_KEY, JSON.stringify(user));
@@ -124,5 +139,6 @@
     resetPassword,
     verifyEmail,
     resendVerification,
+    updateProfile,
   };
 })();

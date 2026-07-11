@@ -12,7 +12,7 @@ module.exports = async (req, res) => {
   try {
     await initDb();
     const result = await pool.query(
-      'SELECT id, email, name, created_at FROM users WHERE id = $1',
+      'SELECT id, email, name, nickname, created_at FROM users WHERE id = $1',
       [payload.id]
     );
     if (!result.rows[0]) return res.status(404).json({ error: 'User tidak ditemukan' });

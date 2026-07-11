@@ -32,7 +32,7 @@ module.exports = async (req, res) => {
     }
 
     const userResult = await pool.query(
-      'UPDATE users SET email_verified = TRUE WHERE email = $1 RETURNING id, email, name',
+      'UPDATE users SET email_verified = TRUE WHERE email = $1 RETURNING id, email, name, nickname',
       [normalizedEmail]
     );
     const user = userResult.rows[0];

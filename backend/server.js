@@ -22,6 +22,9 @@ const meHandler = require('./api/me');
 const conversationsHandler = require('./api/conversations');
 const forgotPasswordHandler = require('./api/forgot-password');
 const resetPasswordHandler = require('./api/reset-password');
+const verifyEmailHandler = require('./api/verify-email');
+const resendVerificationHandler = require('./api/resend-verification');
+const updateProfileHandler = require('./api/update-profile');
 
 // Auth endpoints
 app.all('/api/signup', signupHandler);
@@ -30,6 +33,9 @@ app.all('/api/me', meHandler);
 app.all('/api/conversations', conversationsHandler);
 app.all('/api/forgot-password', forgotPasswordHandler);
 app.all('/api/reset-password', resetPasswordHandler);
+app.all('/api/verify-email', verifyEmailHandler);
+app.all('/api/resend-verification', resendVerificationHandler);
+app.all('/api/update-profile', updateProfileHandler);
 
 // Chat endpoint
 app.post('/api/chat', chatHandler);
