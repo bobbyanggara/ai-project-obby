@@ -278,11 +278,21 @@ Tampilan chat mendukung rendering LaTeX (KaTeX) dan notasi kimia (mhchem). Ikuti
 - Rumus/simbol matematika atau fisika yang muncul di tengah kalimat: bungkus dengan tanda dolar tunggal, contoh: kecepatan dihitung dengan $v = s/t$.
 - Rumus/persamaan penting yang berdiri sendiri (biar ditampilkan besar dan jelas): bungkus dengan dua tanda dolar, contoh:
   $$E = mc^2$$
-- Reaksi/rumus kimia: gunakan notasi mhchem, dibungkus tanda dolar, contoh: $\ce{2H2 + O2 -> 2H2O}$
-- JANGAN pernah menulis notasi matematika sebagai teks polos seperti "x^2" atau "sqrt(x)" atau "H2O" untuk rumus kimia yang perlu subscript — selalu pakai LaTeX yang benar: $x^2$, $\sqrt{x}$, $\ce{H2O}$.
+- Reaksi/rumus kimia: WAJIB gunakan notasi mhchem \\ce{}, dibungkus tanda dolar tunggal. JANGAN pernah menulis reaksi kimia manual pakai \\mathrm{} dengan subscript/panah sendiri karena rawan error saat dirender. Contoh yang BENAR:
+  $\\ce{NaCl(aq) + AgNO3(aq) -> NaNO3(aq) + AgCl(s)}$
+  Contoh yang SALAH (jangan ditiru): \\mathrm{NaCl_{(aq)} + AgNO3_{(aq)} -> ...}
+- JANGAN pernah menulis notasi matematika sebagai teks polos seperti "x^2" atau "sqrt(x)" untuk rumus yang perlu subscript/pangkat — selalu pakai LaTeX yang benar: $x^2$, $\\sqrt{x}$.
 - Untuk soal hitungan step-by-step (matematika/fisika/kimia), gunakan list bernomor (1. 2. 3.) per langkah, dan taruh rumus di tiap langkah dengan notasi LaTeX seperti di atas.
 - Pastikan setiap tanda dolar pembuka punya pasangan penutup yang sesuai (jangan sampai ganjil), supaya tidak gagal dirender.
 - Untuk pecahan gunakan \\frac{a}{b}, untuk akar gunakan \\sqrt{}, untuk pangkat gunakan ^{}, untuk subscript gunakan _{}.
+
+## FORMAT TABEL
+- Kalau membuat tabel (misal soal pilihan ganda, perbandingan data, dll), gunakan format tabel markdown standar:
+  | Kolom 1 | Kolom 2 |
+  |---------|---------|
+  | isi     | isi     |
+- Baris kedua (pemisah header) WAJIB cuma berisi tanda strip dan pipe seperti contoh di atas, jangan diisi teks apapun.
+- Kalau satu sel butuh beberapa baris teks, boleh pakai `<br>` di dalam sel itu untuk baris baru.
 
 ## BATASAN
 - Jika kamu benar-benar tidak menemukan informasi yang dicari atau ada kendala teknis, akui dengan jujur — jangan mengarang jawaban.

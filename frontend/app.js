@@ -560,10 +560,15 @@ if (window.innerWidth >= 821) {
 function escapeHtml(str) { return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
 
 function inlineFormat(str) {
-  let s = escapeHtml(str);
+  // Lindungi tag <br> dulu (AI kadang pakai ini buat baris baru di dalam sel tabel)
+  // supaya gak ikut ke-escape jadi teks "&lt;br&gt;".
+  const BR_TOKEN = '\u0001BR\u0001';
+  let working = str.replace(/<br\s*\/?>/gi, BR_TOKEN);
+  let s = escapeHtml(working);
   s = s.replace(/`([^`]+)`/g, '<code>$1</code>');
   s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
   s = s.replace(/(?<!\*)\*([^*\n]+)\*(?!\*)/g, '<em>$1</em>');
+  s = s.split(BR_TOKEN).join('<br>');
   return s;
 }
 
@@ -610,7 +615,35 @@ function renderMarkdown(rawText) {
     if (inOl) { html += '</ol>'; inOl = false; }
   }
 
-  lines.forEach((line) => {
+  function isTableSeparatorLine(line) {
+    return /^\s*\|?\s*:?-{2,}:?\s*(\|\s*:?-{2,}:?\s*)*\|?\s*$/.test(line);
+  }
+  function parseTableRow(line) {
+    let trimmed = line.trim();
+    if (trimmed.startsWith('|')) trimmed = trimmed.slice(1);
+    if (trimmed.endsWith('|')) trimmed = trimmed.slice(0, -1);
+    return trimmed.split('|').map((cell) => cell.trim());
+  }
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+
+    // Deteksi awal tabel: baris ini punya "|" dan baris berikutnya adalah separator (---|---).
+    if (line.includes('|') && i + 1 < lines.length && isTableSeparatorLine(lines[i + 1])) {
+      closeLists();
+      const headerCells = parseTableRow(line);
+      html += '<table><thead><tr>' + headerCells.map((c) => `<th>${inlineFormat(c)}</th>`).join('') + '</tr></thead><tbody>';
+      i += 2; // lewati baris header & separator
+      while (i < lines.length && lines[i].includes('|') && lines[i].trim() !== '') {
+        const rowCells = parseTableRow(lines[i]);
+        html += '<tr>' + rowCells.map((c) => `<td>${inlineFormat(c)}</td>`).join('') + '</tr>';
+        i++;
+      }
+      html += '</tbody></table>';
+      i--; // kompensasi karena for-loop bakal nambah i lagi di iterasi berikutnya
+      continue;
+    }
+
     const ulMatch = line.match(/^\s*[-*]\s+(.*)$/);
     const olMatch = line.match(/^\s*\d+\.\s+(.*)$/);
     const h3Match = line.match(/^###\s+(.*)$/);
@@ -635,7 +668,7 @@ function renderMarkdown(rawText) {
       closeLists();
       html += `<p>${inlineFormat(line)}</p>`;
     }
-  });
+  }
   closeLists();
 
   // Kembalikan blok kode di posisi aslinya, dibungkus header (nama bahasa + tombol salin).
