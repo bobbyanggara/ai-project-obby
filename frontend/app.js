@@ -7,6 +7,8 @@ const I18N = {
     newChat: 'Obrolan baru',
 
     history: 'Riwayat',
+    clearPartial: 'Hapus sebagian',
+    tooltipClearPartial: 'Hapus sebagian riwayat obrolan',
     clearAll: 'Hapus semua riwayat',
     emptyTitle: 'Halo, ada yang bisa dibantu?',
     emptySubtitle: 'Tanyakan apa saja — dari ide, kode, sampai obrolan santai.',
@@ -52,6 +54,8 @@ const I18N = {
     newChat: 'New chat',
 
     history: 'History',
+    clearPartial: 'Delete part of history',
+    tooltipClearPartial: 'Delete part of chat history',
     clearAll: 'Clear all history',
     emptyTitle: 'Hi, what can I help with?',
     emptySubtitle: 'Ask anything — ideas, code, or just a chat.',
@@ -521,12 +525,6 @@ langToggle.addEventListener('click', () => {
   // Update greeting text based on current local time & nama user (kalau login).
   updateGreetingText();
 
-  // Update outer buttons immediately on language toggle.
-
-  if (clearPartialBtn) {
-    clearPartialBtn.textContent = currentLang === 'id' ? 'Hapus sebagian' : 'Delete part of the history';
-  }
-
   applyI18n();
   renderMessages();
   renderSuggestions();
@@ -857,12 +855,6 @@ function showPartialDeleteModal() {
   if (!selectableConvs.length) return;
 
   // simple modal inline (tanpa dependency CSS khusus)
-
-  // Update outer buttons too (the "Hapus sebagian" button label in sidebar).
-  // Ensure it changes when language toggles.
-  if (clearPartialBtn) {
-    clearPartialBtn.textContent = currentLang === 'id' ? 'Hapus sebagian' : 'Delete part of the history';
-  }
 
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
