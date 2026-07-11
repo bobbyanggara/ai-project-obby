@@ -10,75 +10,106 @@
     font-family: 'Inter', system-ui, sans-serif;
     background: #060B18;
     color: #eee;
+    margin: 0; padding: 40px 20px;
     display: flex; justify-content: center;
-    min-height: 100vh; margin: 0; padding: 40px 20px;
+    position: relative; overflow-x: hidden;
   }
-  .card {
-    background: rgba(255,255,255,0.04);
-    border: 1px solid rgba(255,255,255,0.08);
-    backdrop-filter: blur(20px);
-    padding: 40px 36px; border-radius: 20px; width: 100%; max-width: 640px;
+  .liquid-bg { position: fixed; inset: 0; overflow: hidden; z-index: 0; pointer-events: none; }
+  .blob { position: absolute; border-radius: 50%; filter: blur(90px); }
+  .blob-1 {
+    width: 460px; height: 460px; top: -140px; left: -120px;
+    background: radial-gradient(circle at 35% 35%, #2F6BFF, transparent 70%);
+    opacity: 0.45; animation: floatA 16s ease-in-out infinite;
   }
-  .brand { display: flex; align-items: center; gap: 8px; font-weight: 700; letter-spacing: 2px; margin-bottom: 4px; }
-  .brand-logo { width: 22px; height: 22px; border-radius: 6px; flex-shrink: 0; }
-  .updated { color: #777; font-size: 12.5px; margin: 0 0 24px; }
-  h1 { margin: 0 0 6px; font-size: 22px; font-weight: 700; }
-  h2 { margin: 28px 0 8px; font-size: 15px; font-weight: 600; color: #C9D4FF; }
-  p, li { font-size: 13.5px; line-height: 1.65; color: #ccc; }
-  ul { margin: 8px 0; padding-left: 20px; }
-  a { color: #9CB4FF; text-decoration: none; }
-  a:hover { text-decoration: underline; }
-  .back { display: inline-block; margin-top: 28px; font-size: 13px; }
+  .blob-2 {
+    width: 420px; height: 420px; bottom: -150px; right: -100px;
+    background: radial-gradient(circle at 65% 65%, #22D3EE, transparent 70%);
+    opacity: 0.4; animation: floatB 18s ease-in-out infinite;
+  }
+  @keyframes floatA { 0%,100%{transform:translate(0,0);} 50%{transform:translate(50px,40px);} }
+  @keyframes floatB { 0%,100%{transform:translate(0,0);} 50%{transform:translate(-40px,-50px);} }
+  @media (prefers-reduced-motion: reduce) { .blob { animation: none !important; } }
+  .wrap { max-width: 640px; width: 100%; position: relative; z-index: 1; }
+  .brand-row { display: flex; align-items: center; gap: 9px; margin-bottom: 24px; }
+  .brand-logo { width: 28px; height: 28px; border-radius: 9px; display: block; }
+  .brand { font-weight: 700; letter-spacing: 2px; }
+  h1 { font-size: 22px; margin: 0 0 6px; }
+  .updated { color: #888; font-size: 12.5px; margin: 0 0 28px; }
+  h2 { font-size: 15px; margin: 28px 0 8px; color: #eee; }
+  p, li { font-size: 13.5px; color: #bbb; line-height: 1.7; }
+  ul { padding-left: 20px; margin: 6px 0; }
+  a { color: #6FC7FF; }
+  .back-link { display: inline-block; margin-top: 32px; font-size: 13.5px; }
 </style>
 </head>
 <body>
-  <div class="card">
-    <div class="brand"><img src="icon-192.png" class="brand-logo" alt="Logo Obby"> O B B Y</div>
-    <h1>Kebijakan Privasi</h1>
-    <p class="updated">Terakhir diperbarui: 10 Juli 2026</p>
+  <div class="liquid-bg" aria-hidden="true">
+    <span class="blob blob-1"></span>
+    <span class="blob blob-2"></span>
+  </div>
+  <div class="wrap">
+    <div class="brand-row">
+      <img src="icon-192.png" alt="OBBY AI" class="brand-logo">
+      <div class="brand">O B B Y</div>
+    </div>
 
-    <p>Kebijakan Privasi ini menjelaskan bagaimana OBBY AI mengumpulkan, menggunakan, dan melindungi data kamu saat menggunakan layanan kami.</p>
+    <h1>Kebijakan Privasi</h1>
+    <p class="updated">Terakhir diperbarui: [isi tanggal terbaru di sini]</p>
+
+    <p>
+      Kebijakan Privasi ini menjelaskan data apa saja yang kami kumpulkan saat kamu
+      menggunakan OBBY AI, dan bagaimana data tersebut digunakan serta dilindungi.
+    </p>
 
     <h2>1. Data yang Kami Kumpulkan</h2>
     <ul>
-      <li><strong>Data akun:</strong> nama (opsional), alamat email, dan password (disimpan dalam bentuk terenkripsi/hash, bukan teks biasa).</li>
-      <li><strong>Riwayat obrolan:</strong> jika kamu login, percakapanmu dapat disinkronkan ke server agar bisa diakses dari perangkat lain.</li>
-      <li><strong>Data teknis:</strong> informasi perangkat dan penggunaan aplikasi untuk keperluan peningkatan layanan.</li>
+      <li><strong>Data akun:</strong> nama, nama panggilan, dan email saat kamu mendaftar.</li>
+      <li><strong>Riwayat percakapan:</strong> isi chat kamu dengan OBBY AI, disimpan supaya bisa sinkron antar perangkat.</li>
+      <li><strong>Data teknis:</strong> informasi dasar seperti waktu login, untuk keperluan keamanan akun.</li>
     </ul>
 
-    <h2>2. Bagaimana Data Digunakan</h2>
+    <h2>2. Cara Kami Menggunakan Data</h2>
     <ul>
-      <li>Mengautentikasi dan mengamankan akunmu.</li>
-      <li>Menyimpan serta menyinkronkan riwayat obrolan antar perangkat.</li>
-      <li>Mengirim kode OTP saat proses reset password.</li>
-      <li>Meningkatkan kualitas dan keandalan layanan.</li>
+      <li>Menyediakan dan meningkatkan layanan OBBY AI.</li>
+      <li>Mengirim kode OTP untuk verifikasi email dan reset password.</li>
+      <li>Menyimpan riwayat chat supaya bisa diakses kembali di sesi berikutnya.</li>
     </ul>
+    <p>Kami <strong>tidak menjual</strong> data pribadi kamu ke pihak manapun.</p>
 
-    <h2>3. Berbagi Data</h2>
-    <p>Kami tidak menjual data pribadimu kepada pihak ketiga. Data hanya dibagikan kepada penyedia infrastruktur (misalnya layanan hosting dan email) sejauh diperlukan untuk menjalankan layanan, atau jika diwajibkan oleh hukum.</p>
+    <h2>3. Penyimpanan & Keamanan</h2>
+    <p>
+      Password kamu disimpan dalam bentuk terenkripsi (hashed), bukan teks biasa.
+      Data disimpan di infrastruktur database pihak ketiga (Supabase) yang menerapkan
+      praktik keamanan standar industri.
+    </p>
 
-    <h2>4. Keamanan</h2>
-    <p>Kami menggunakan enkripsi dan praktik keamanan standar industri untuk melindungi data kamu. Namun, tidak ada sistem yang sepenuhnya bebas risiko, sehingga kami menganjurkan kamu menggunakan password yang kuat dan unik.</p>
+    <h2>4. Pihak Ketiga</h2>
+    <p>
+      Kami menggunakan layanan pihak ketiga untuk mendukung operasional OBBY AI, seperti
+      penyedia database (Supabase) dan penyedia pengiriman email (Brevo). Masing-masing
+      tunduk pada kebijakan privasi mereka sendiri.
+    </p>
 
     <h2>5. Hak Kamu</h2>
     <ul>
-      <li>Mengakses atau memperbarui data akunmu.</li>
-      <li>Menghapus riwayat obrolan kapan saja melalui menu "Hapus semua riwayat".</li>
-      <li>Meminta penghapusan akun beserta datanya.</li>
+      <li>Kamu bisa mengubah nama/nama panggilan kapan saja lewat fitur edit profil.</li>
+      <li>Kamu bisa meminta penghapusan akun beserta data terkait dengan menghubungi kami.</li>
     </ul>
 
-    <h2>6. Penyimpanan Data</h2>
-    <p>Data disimpan selama akunmu aktif. Jika akun dihapus, data terkait akan dihapus dari sistem kami dalam jangka waktu yang wajar, kecuali ada kewajiban hukum untuk menyimpannya lebih lama.</p>
+    <h2>6. Perubahan Kebijakan</h2>
+    <p>
+      Kebijakan Privasi ini dapat diperbarui sewaktu-waktu. Perubahan akan diinformasikan
+      melalui halaman ini.
+    </p>
 
-    <h2>7. Perubahan Kebijakan</h2>
-    <p>Kami dapat memperbarui Kebijakan Privasi ini dari waktu ke waktu. Perubahan signifikan akan diinformasikan melalui aplikasi.</p>
+    <h2>7. Kontak</h2>
+    <p>
+      Ada pertanyaan soal privasi data kamu? Hubungi kami di [isi email kontak kamu di sini].
+    </p>
 
-    <h2>8. Kontak</h2>
-    <p>Jika ada pertanyaan seputar privasi datamu, silakan hubungi tim kami melalui halaman dukungan di aplikasi.</p>
-
-    <p>Lihat juga <a href="terms.html">Syarat Layanan</a> kami.</p>
-
-    <a class="back" href="signup.html">← Kembali</a>
+    <a class="back-link" href="terms.html">Baca Syarat Layanan kami →</a>
+    <br>
+    <a class="back-link" href="javascript:history.back()">← Kembali</a>
   </div>
 </body>
 </html>
