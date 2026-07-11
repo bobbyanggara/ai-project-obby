@@ -4,112 +4,492 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Kebijakan Privasi — OBBY AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-  * { box-sizing: border-box; }
-  body {
-    font-family: 'Inter', system-ui, sans-serif;
-    background: #060B18;
-    color: #eee;
-    margin: 0; padding: 40px 20px;
-    display: flex; justify-content: center;
-    position: relative; overflow-x: hidden;
+  :root {
+    --bg-deep: #060B18;
+    --glass-bg: rgba(255,255,255,0.045);
+    --glass-bg-strong: rgba(255,255,255,0.08);
+    --glass-border: rgba(255,255,255,0.12);
+    --text-primary: #F5F7FF;
+    --text-muted: #A8B0C4;
+    --text-faint: #6B7386;
+    --accent-1: #2F6BFF;
+    --accent-2: #22D3EE;
+    --accent-gradient: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+    --radius-lg: 20px;
+    --radius-md: 14px;
+    --radius-sm: 9px;
+    --font-heading: 'Sora', system-ui, sans-serif;
+    --font-body: 'Inter', system-ui, sans-serif;
   }
+  [data-theme="light"] {
+    --bg-deep: #F3F5FB;
+    --glass-bg: rgba(20,25,45,0.03);
+    --glass-bg-strong: rgba(255,255,255,0.75);
+    --glass-border: rgba(15,23,42,0.10);
+    --text-primary: #12151F;
+    --text-muted: #545D74;
+    --text-faint: #8A93A8;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: var(--font-body);
+    background: var(--bg-deep);
+    color: var(--text-primary);
+    margin: 0;
+    position: relative;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    transition: background 0.25s ease, color 0.25s ease;
+  }
+
+  /* ---------- Liquid background (sama seperti app utama) ---------- */
   .liquid-bg { position: fixed; inset: 0; overflow: hidden; z-index: 0; pointer-events: none; }
   .blob { position: absolute; border-radius: 50%; filter: blur(90px); }
   .blob-1 {
     width: 460px; height: 460px; top: -140px; left: -120px;
-    background: radial-gradient(circle at 35% 35%, #2F6BFF, transparent 70%);
-    opacity: 0.45; animation: floatA 16s ease-in-out infinite;
+    background: radial-gradient(circle at 35% 35%, var(--accent-1), transparent 70%);
+    opacity: 0.35; animation: floatA 16s ease-in-out infinite;
   }
   .blob-2 {
     width: 420px; height: 420px; bottom: -150px; right: -100px;
-    background: radial-gradient(circle at 65% 65%, #22D3EE, transparent 70%);
-    opacity: 0.4; animation: floatB 18s ease-in-out infinite;
+    background: radial-gradient(circle at 65% 65%, var(--accent-2), transparent 70%);
+    opacity: 0.30; animation: floatB 18s ease-in-out infinite;
   }
   @keyframes floatA { 0%,100%{transform:translate(0,0);} 50%{transform:translate(50px,40px);} }
   @keyframes floatB { 0%,100%{transform:translate(0,0);} 50%{transform:translate(-40px,-50px);} }
-  @media (prefers-reduced-motion: reduce) { .blob { animation: none !important; } }
-  .wrap { max-width: 640px; width: 100%; position: relative; z-index: 1; }
-  .brand-row { display: flex; align-items: center; gap: 9px; margin-bottom: 24px; }
-  .brand-logo { width: 28px; height: 28px; border-radius: 9px; display: block; }
-  .brand { font-weight: 700; letter-spacing: 2px; }
-  h1 { font-size: 22px; margin: 0 0 6px; }
-  .updated { color: #888; font-size: 12.5px; margin: 0 0 28px; }
-  h2 { font-size: 15px; margin: 28px 0 8px; color: #eee; }
-  p, li { font-size: 13.5px; color: #bbb; line-height: 1.7; }
-  ul { padding-left: 20px; margin: 6px 0; }
-  a { color: #6FC7FF; }
-  .back-link { display: inline-block; margin-top: 32px; font-size: 13.5px; }
+  @media (prefers-reduced-motion: reduce) { .blob { animation: none !important; } html { scroll-behavior: auto; } }
+
+  /* ---------- Layout shell ---------- */
+  .page { position: relative; z-index: 1; max-width: 980px; margin: 0 auto; padding: 28px 20px 80px; }
+
+  /* ---------- Header ---------- */
+  .page-header {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px; margin-bottom: 40px; flex-wrap: wrap;
+  }
+  .brand-row { display: flex; align-items: center; gap: 10px; text-decoration: none; color: inherit; }
+  .brand-logo { width: 30px; height: 30px; border-radius: 9px; display: block; }
+  .brand { font-family: var(--font-heading); font-weight: 700; letter-spacing: 2.5px; font-size: 14px; }
+  .header-actions { display: flex; align-items: center; gap: 8px; }
+  .icon-btn, .back-app-link, .lang-btn {
+    font-family: var(--font-body);
+    border: 1px solid var(--glass-border);
+    background: var(--glass-bg);
+    color: var(--text-muted);
+    border-radius: 999px;
+    padding: 8px 14px;
+    font-size: 12.5px;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .lang-btn { min-width: 40px; justify-content: center; letter-spacing: 0.5px; }
+  .icon-btn:hover, .back-app-link:hover, .lang-btn:hover {
+    color: var(--text-primary); border-color: rgba(255,255,255,0.28); background: var(--glass-bg-strong);
+  }
+
+  /* ---------- Hero ---------- */
+  .hero { margin-bottom: 28px; }
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 11.5px; font-weight: 600; letter-spacing: 0.6px; text-transform: uppercase;
+    color: transparent; background: var(--accent-gradient); -webkit-background-clip: text; background-clip: text;
+    margin-bottom: 12px;
+  }
+  h1 {
+    font-family: var(--font-heading); font-weight: 700;
+    font-size: clamp(26px, 4vw, 34px); margin: 0 0 10px; letter-spacing: -0.3px;
+  }
+  .updated {
+    display: inline-block;
+    font-size: 12px; color: var(--text-faint);
+    border: 1px solid var(--glass-border); background: var(--glass-bg);
+    padding: 5px 12px; border-radius: 999px; margin: 0 0 20px;
+  }
+  .intro { font-size: 14.5px; color: var(--text-muted); line-height: 1.75; max-width: 62ch; margin: 0; }
+
+  /* ---------- TL;DR card ---------- */
+  .tldr {
+    margin: 28px 0 36px;
+    border: 1px solid var(--glass-border);
+    background: var(--glass-bg-strong);
+    border-radius: var(--radius-lg);
+    padding: 22px 24px;
+    backdrop-filter: blur(16px) saturate(150%);
+    -webkit-backdrop-filter: blur(16px) saturate(150%);
+  }
+  .tldr h3 {
+    font-family: var(--font-heading); font-size: 14.5px; margin: 0 0 12px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .tldr h3::before {
+    content: ''; width: 7px; height: 7px; border-radius: 50%;
+    background: var(--accent-gradient); flex-shrink: 0;
+  }
+  .tldr ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 10px; }
+  .tldr li {
+    font-size: 13.5px; color: var(--text-muted); line-height: 1.6;
+    padding-left: 22px; position: relative;
+  }
+  .tldr li::before {
+    content: '✓'; position: absolute; left: 0; top: 0.5px;
+    font-size: 12px; font-weight: 700; color: var(--accent-2);
+  }
+  .tldr-note {
+    font-size: 11.5px; color: var(--text-faint); margin: 14px 0 0;
+    padding-top: 12px; border-top: 1px solid var(--glass-border);
+  }
+
+  /* ---------- Two-column layout ---------- */
+  .layout { display: grid; grid-template-columns: 200px 1fr; gap: 40px; align-items: start; }
+  .toc-desktop {
+    position: sticky; top: 24px;
+    display: flex; flex-direction: column; gap: 2px;
+  }
+  .toc-title {
+    font-size: 11px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase;
+    color: var(--text-faint); margin-bottom: 10px;
+  }
+  .toc-desktop a {
+    font-size: 13px; color: var(--text-muted); text-decoration: none;
+    padding: 7px 10px; border-radius: var(--radius-sm);
+    border-left: 2px solid transparent;
+    display: flex; gap: 8px; transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+  }
+  .toc-desktop a:hover { color: var(--text-primary); background: var(--glass-bg); border-left-color: var(--accent-1); }
+  .toc-num { color: var(--text-faint); font-variant-numeric: tabular-nums; }
+
+  .toc-mobile { display: none; margin-bottom: 28px; }
+  .toc-mobile summary {
+    cursor: pointer; list-style: none; font-size: 13px; font-weight: 600;
+    border: 1px solid var(--glass-border); background: var(--glass-bg);
+    border-radius: var(--radius-md); padding: 12px 16px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .toc-mobile summary::-webkit-details-marker { display: none; }
+  .toc-mobile summary::after { content: '▾'; color: var(--text-faint); transition: transform 0.2s ease; }
+  .toc-mobile[open] summary::after { transform: rotate(180deg); }
+  .toc-mobile .toc-mobile-list {
+    display: flex; flex-direction: column; gap: 2px; margin-top: 6px;
+    border: 1px solid var(--glass-border); border-radius: var(--radius-md); padding: 6px; background: var(--glass-bg);
+  }
+  .toc-mobile a {
+    font-size: 13px; color: var(--text-muted); text-decoration: none;
+    padding: 9px 10px; border-radius: var(--radius-sm); display: flex; gap: 8px;
+  }
+  .toc-mobile a:hover { color: var(--text-primary); background: var(--glass-bg-strong); }
+
+  /* ---------- Content sections ---------- */
+  .content section { margin-bottom: 34px; scroll-margin-top: 20px; }
+  .sec-head { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+  .sec-num {
+    flex-shrink: 0; width: 26px; height: 26px; border-radius: 8px;
+    background: var(--accent-gradient); color: #fff;
+    font-family: var(--font-heading); font-weight: 700; font-size: 12.5px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  h2 { font-family: var(--font-heading); font-size: 16.5px; margin: 0; font-weight: 600; }
+  .content p, .content li { font-size: 13.5px; color: var(--text-muted); line-height: 1.75; }
+  .content p { margin: 0 0 10px; }
+  .content ul { padding-left: 20px; margin: 10px 0 0; display: grid; gap: 8px; }
+  .content ul.plain { list-style: none; padding-left: 0; }
+  .content ul.plain li { padding-left: 20px; position: relative; }
+  .content ul.plain li::before {
+    content: ''; position: absolute; left: 0; top: 8px; width: 5px; height: 5px; border-radius: 50%;
+    background: var(--accent-gradient);
+  }
+  .content strong { color: var(--text-primary); font-weight: 600; }
+  a { color: var(--accent-2); }
+
+  .callout {
+    border-left: 3px solid var(--accent-1);
+    background: var(--glass-bg);
+    border-radius: 0 var(--radius-md) var(--radius-md) 0;
+    padding: 14px 16px; margin-top: 12px;
+  }
+  .callout p { margin: 0; color: var(--text-muted); }
+
+  .contact-email {
+    font-weight: 600; color: var(--text-primary); border-bottom: 1px dashed var(--glass-border);
+  }
+
+  /* ---------- Cross-links & footer ---------- */
+  .cross-links { margin-top: 48px; }
+  .cross-card {
+    display: flex; align-items: center; justify-content: space-between; gap: 14px;
+    text-decoration: none; color: inherit;
+    border: 1px solid var(--glass-border); background: var(--glass-bg-strong);
+    border-radius: var(--radius-lg); padding: 18px 22px;
+    transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+  }
+  .cross-card:hover { transform: translateY(-2px); border-color: rgba(255,255,255,0.24); }
+  .cross-card strong { font-family: var(--font-heading); font-size: 14.5px; display: block; margin-bottom: 3px; }
+  .cross-card p { margin: 0; font-size: 12.5px; color: var(--text-faint); }
+  .cross-arrow {
+    flex-shrink: 0; width: 34px; height: 34px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--glass-bg); border: 1px solid var(--glass-border); color: var(--text-muted);
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+  .cross-card:hover .cross-arrow { background: var(--accent-gradient); color: #fff; border-color: transparent; }
+
+  .footer-actions {
+    margin-top: 32px; padding-top: 20px; border-top: 1px solid var(--glass-border);
+    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;
+  }
+  .footer-actions a { font-size: 13px; color: var(--text-muted); text-decoration: none; }
+  .footer-actions a:hover { color: var(--text-primary); }
+  .footer-credit { font-size: 11.5px; color: var(--text-faint); }
+
+  @media (max-width: 860px) {
+    .layout { grid-template-columns: 1fr; }
+    .toc-desktop { display: none; }
+    .toc-mobile { display: block; }
+  }
 </style>
 </head>
-<body>
+<body data-theme="dark">
   <div class="liquid-bg" aria-hidden="true">
     <span class="blob blob-1"></span>
     <span class="blob blob-2"></span>
   </div>
-  <div class="wrap">
-    <div class="brand-row">
-      <img src="icon-192.png" alt="OBBY AI" class="brand-logo">
-      <div class="brand">O B B Y</div>
+
+  <div class="page">
+    <header class="page-header">
+      <a class="brand-row" href="index.html">
+        <img src="icon-192.png" alt="OBBY AI" class="brand-logo">
+        <span class="brand">O B B Y</span>
+      </a>
+      <div class="header-actions">
+        <button id="langToggle" class="lang-btn" type="button" aria-label="Ganti bahasa">ID</button>
+        <a class="back-app-link" href="index.html" data-i18n="navBack">← Kembali ke Aplikasi</a>
+      </div>
+    </header>
+
+    <div class="hero">
+      <span class="eyebrow" data-i18n="eyebrow">Dokumen Legal</span>
+      <h1 data-i18n="h1">Kebijakan Privasi</h1>
+      <p class="updated" data-i18n="updated">Terakhir diperbarui: 12 Juli 2026</p>
+      <p class="intro" data-i18n="intro">Kebijakan ini menjelaskan data apa saja yang kami kumpulkan saat kamu menggunakan OBBY AI, bagaimana data itu dipakai, dan bagaimana kami melindunginya.</p>
     </div>
 
-    <h1>Kebijakan Privasi</h1>
-    <p class="updated">Terakhir diperbarui: [isi tanggal terbaru di sini]</p>
+    <div class="tldr">
+      <h3 data-i18n="tldrTitle">Ringkasan singkat</h3>
+      <ul>
+        <li data-i18n="tldr1">Kami menyimpan data akun (nama, email) dan riwayat chat supaya bisa sinkron antar perangkat.</li>
+        <li data-i18n="tldr2">Kata sandi kamu selalu disimpan terenkripsi (hashed), tidak pernah dalam bentuk teks biasa.</li>
+        <li data-i18n="tldr3">Kami tidak pernah menjual data pribadi kamu ke pihak manapun.</li>
+        <li data-i18n="tldr4">Kamu bisa mengubah profil atau meminta penghapusan akun kapan saja.</li>
+      </ul>
+      <p class="tldr-note" data-i18n="tldrNote">Ringkasan ini hanya bantuan baca cepat, bukan pengganti isi lengkap di bawah.</p>
+    </div>
 
-    <p>
-      Kebijakan Privasi ini menjelaskan data apa saja yang kami kumpulkan saat kamu
-      menggunakan OBBY AI, dan bagaimana data tersebut digunakan serta dilindungi.
-    </p>
+    <div class="layout">
+      <nav class="toc-desktop" aria-label="Daftar isi">
+        <span class="toc-title" data-i18n="tocTitle">Daftar Isi</span>
+        <a href="#s1"><span class="toc-num">01</span><span data-i18n="h2_1">Data yang Kami Kumpulkan</span></a>
+        <a href="#s2"><span class="toc-num">02</span><span data-i18n="h2_2">Cara Kami Menggunakan Data</span></a>
+        <a href="#s3"><span class="toc-num">03</span><span data-i18n="h2_3">Penyimpanan &amp; Keamanan</span></a>
+        <a href="#s4"><span class="toc-num">04</span><span data-i18n="h2_4">Pihak Ketiga</span></a>
+        <a href="#s5"><span class="toc-num">05</span><span data-i18n="h2_5">Hak Kamu</span></a>
+        <a href="#s6"><span class="toc-num">06</span><span data-i18n="h2_6">Perubahan Kebijakan</span></a>
+        <a href="#s7"><span class="toc-num">07</span><span data-i18n="h2_7">Kontak</span></a>
+      </nav>
 
-    <h2>1. Data yang Kami Kumpulkan</h2>
-    <ul>
-      <li><strong>Data akun:</strong> nama, nama panggilan, dan email saat kamu mendaftar.</li>
-      <li><strong>Riwayat percakapan:</strong> isi chat kamu dengan OBBY AI, disimpan supaya bisa sinkron antar perangkat.</li>
-      <li><strong>Data teknis:</strong> informasi dasar seperti waktu login, untuk keperluan keamanan akun.</li>
-    </ul>
+      <main class="content">
+        <details class="toc-mobile">
+          <summary data-i18n="tocTitle">Daftar Isi</summary>
+          <div class="toc-mobile-list">
+            <a href="#s1"><span class="toc-num">01</span><span data-i18n="h2_1">Data yang Kami Kumpulkan</span></a>
+            <a href="#s2"><span class="toc-num">02</span><span data-i18n="h2_2">Cara Kami Menggunakan Data</span></a>
+            <a href="#s3"><span class="toc-num">03</span><span data-i18n="h2_3">Penyimpanan &amp; Keamanan</span></a>
+            <a href="#s4"><span class="toc-num">04</span><span data-i18n="h2_4">Pihak Ketiga</span></a>
+            <a href="#s5"><span class="toc-num">05</span><span data-i18n="h2_5">Hak Kamu</span></a>
+            <a href="#s6"><span class="toc-num">06</span><span data-i18n="h2_6">Perubahan Kebijakan</span></a>
+            <a href="#s7"><span class="toc-num">07</span><span data-i18n="h2_7">Kontak</span></a>
+          </div>
+        </details>
 
-    <h2>2. Cara Kami Menggunakan Data</h2>
-    <ul>
-      <li>Menyediakan dan meningkatkan layanan OBBY AI.</li>
-      <li>Mengirim kode OTP untuk verifikasi email dan reset password.</li>
-      <li>Menyimpan riwayat chat supaya bisa diakses kembali di sesi berikutnya.</li>
-    </ul>
-    <p>Kami <strong>tidak menjual</strong> data pribadi kamu ke pihak manapun.</p>
+        <section id="s1">
+          <div class="sec-head"><span class="sec-num">1</span><h2 data-i18n="h2_1">Data yang Kami Kumpulkan</h2></div>
+          <ul class="plain">
+            <li><strong data-i18n="d1label">Data akun:</strong> <span data-i18n="d1desc">nama, nama panggilan, dan email saat kamu mendaftar.</span></li>
+            <li><strong data-i18n="d2label">Riwayat percakapan:</strong> <span data-i18n="d2desc">isi chat kamu dengan OBBY AI, disimpan supaya bisa sinkron antar perangkat.</span></li>
+            <li><strong data-i18n="d3label">Data teknis:</strong> <span data-i18n="d3desc">informasi dasar seperti waktu login, untuk keperluan keamanan akun.</span></li>
+          </ul>
+        </section>
 
-    <h2>3. Penyimpanan & Keamanan</h2>
-    <p>
-      Password kamu disimpan dalam bentuk terenkripsi (hashed), bukan teks biasa.
-      Data disimpan di infrastruktur database pihak ketiga (Supabase) yang menerapkan
-      praktik keamanan standar industri.
-    </p>
+        <section id="s2">
+          <div class="sec-head"><span class="sec-num">2</span><h2 data-i18n="h2_2">Cara Kami Menggunakan Data</h2></div>
+          <ul class="plain">
+            <li data-i18n="use1">Menyediakan dan meningkatkan layanan OBBY AI.</li>
+            <li data-i18n="use2">Mengirim kode OTP untuk verifikasi email dan reset kata sandi.</li>
+            <li data-i18n="use3">Menyimpan riwayat chat supaya bisa diakses kembali di sesi berikutnya.</li>
+          </ul>
+          <p style="margin-top:12px;"><strong data-i18n="noSell">Kami tidak menjual data pribadi kamu ke pihak manapun.</strong></p>
+        </section>
 
-    <h2>4. Pihak Ketiga</h2>
-    <p>
-      Kami menggunakan layanan pihak ketiga untuk mendukung operasional OBBY AI, seperti
-      penyedia database (Supabase) dan penyedia pengiriman email (Brevo). Masing-masing
-      tunduk pada kebijakan privasi mereka sendiri.
-    </p>
+        <section id="s3">
+          <div class="sec-head"><span class="sec-num">3</span><h2 data-i18n="h2_3">Penyimpanan &amp; Keamanan</h2></div>
+          <p data-i18n="p3">Kata sandi kamu disimpan dalam bentuk terenkripsi (hashed), bukan teks biasa. Data disimpan di infrastruktur database pihak ketiga (Supabase) yang menerapkan praktik keamanan standar industri.</p>
+        </section>
 
-    <h2>5. Hak Kamu</h2>
-    <ul>
-      <li>Kamu bisa mengubah nama/nama panggilan kapan saja lewat fitur edit profil.</li>
-      <li>Kamu bisa meminta penghapusan akun beserta data terkait dengan menghubungi kami.</li>
-    </ul>
+        <section id="s4">
+          <div class="sec-head"><span class="sec-num">4</span><h2 data-i18n="h2_4">Pihak Ketiga</h2></div>
+          <p data-i18n="p4">Kami menggunakan layanan pihak ketiga untuk mendukung operasional OBBY AI, seperti penyedia database (Supabase) dan penyedia pengiriman email (Brevo). Masing-masing tunduk pada kebijakan privasi mereka sendiri.</p>
+        </section>
 
-    <h2>6. Perubahan Kebijakan</h2>
-    <p>
-      Kebijakan Privasi ini dapat diperbarui sewaktu-waktu. Perubahan akan diinformasikan
-      melalui halaman ini.
-    </p>
+        <section id="s5">
+          <div class="sec-head"><span class="sec-num">5</span><h2 data-i18n="h2_5">Hak Kamu</h2></div>
+          <ul class="plain">
+            <li data-i18n="right1">Kamu bisa mengubah nama/nama panggilan kapan saja lewat fitur edit profil.</li>
+            <li data-i18n="right2">Kamu bisa meminta penghapusan akun beserta data terkait dengan menghubungi kami.</li>
+          </ul>
+        </section>
 
-    <h2>7. Kontak</h2>
-    <p>
-      Ada pertanyaan soal privasi data kamu? Hubungi kami di [isi email kontak kamu di sini].
-    </p>
+        <section id="s6">
+          <div class="sec-head"><span class="sec-num">6</span><h2 data-i18n="h2_6">Perubahan Kebijakan</h2></div>
+          <p data-i18n="p6">Kebijakan Privasi ini dapat diperbarui sewaktu-waktu. Perubahan akan diinformasikan melalui halaman ini beserta tanggal pembaruannya.</p>
+        </section>
 
-    <a class="back-link" href="terms.html">Baca Syarat Layanan kami →</a>
-    <br>
-    <a class="back-link" href="javascript:history.back()">← Kembali</a>
+        <section id="s7">
+          <div class="sec-head"><span class="sec-num">7</span><h2 data-i18n="h2_7">Kontak</h2></div>
+          <p><span data-i18n="p7">Ada pertanyaan soal privasi data kamu? Hubungi kami di</span> <a class="contact-email" href="mailto:halo@obbyai.app">[isi email kontak kamu di sini]</a>.</p>
+        </section>
+      </main>
+    </div>
+
+    <div class="cross-links">
+      <a class="cross-card" href="terms.html">
+        <div>
+          <strong data-i18n="crossTitle">Syarat Layanan</strong>
+          <p data-i18n="crossDesc">Baca aturan penggunaan dan tanggung jawab dalam memakai OBBY AI.</p>
+        </div>
+        <span class="cross-arrow" aria-hidden="true">→</span>
+      </a>
+    </div>
+
+    <div class="footer-actions">
+      <a href="javascript:history.back()" data-i18n="backLink">← Kembali</a>
+      <span class="footer-credit">OBBY AI © 2026</span>
+    </div>
   </div>
+
+  <script>
+    // ---------- i18n: ikut preferensi bahasa yang sama dengan aplikasi utama (localStorage 'lang') ----------
+    const I18N = {
+      id: {
+        navBack: '← Kembali ke Aplikasi',
+        eyebrow: 'Dokumen Legal',
+        h1: 'Kebijakan Privasi',
+        updated: 'Terakhir diperbarui: 12 Juli 2026',
+        intro: 'Kebijakan ini menjelaskan data apa saja yang kami kumpulkan saat kamu menggunakan OBBY AI, bagaimana data itu dipakai, dan bagaimana kami melindunginya.',
+        tldrTitle: 'Ringkasan singkat',
+        tldr1: 'Kami menyimpan data akun (nama, email) dan riwayat chat supaya bisa sinkron antar perangkat.',
+        tldr2: 'Kata sandi kamu selalu disimpan terenkripsi (hashed), tidak pernah dalam bentuk teks biasa.',
+        tldr3: 'Kami tidak pernah menjual data pribadi kamu ke pihak manapun.',
+        tldr4: 'Kamu bisa mengubah profil atau meminta penghapusan akun kapan saja.',
+        tldrNote: 'Ringkasan ini hanya bantuan baca cepat, bukan pengganti isi lengkap di bawah.',
+        tocTitle: 'Daftar Isi',
+        h2_1: 'Data yang Kami Kumpulkan',
+        h2_2: 'Cara Kami Menggunakan Data',
+        h2_3: 'Penyimpanan & Keamanan',
+        h2_4: 'Pihak Ketiga',
+        h2_5: 'Hak Kamu',
+        h2_6: 'Perubahan Kebijakan',
+        h2_7: 'Kontak',
+        d1label: 'Data akun:',
+        d1desc: 'nama, nama panggilan, dan email saat kamu mendaftar.',
+        d2label: 'Riwayat percakapan:',
+        d2desc: 'isi chat kamu dengan OBBY AI, disimpan supaya bisa sinkron antar perangkat.',
+        d3label: 'Data teknis:',
+        d3desc: 'informasi dasar seperti waktu login, untuk keperluan keamanan akun.',
+        use1: 'Menyediakan dan meningkatkan layanan OBBY AI.',
+        use2: 'Mengirim kode OTP untuk verifikasi email dan reset kata sandi.',
+        use3: 'Menyimpan riwayat chat supaya bisa diakses kembali di sesi berikutnya.',
+        noSell: 'Kami tidak menjual data pribadi kamu ke pihak manapun.',
+        p3: 'Kata sandi kamu disimpan dalam bentuk terenkripsi (hashed), bukan teks biasa. Data disimpan di infrastruktur database pihak ketiga (Supabase) yang menerapkan praktik keamanan standar industri.',
+        p4: 'Kami menggunakan layanan pihak ketiga untuk mendukung operasional OBBY AI, seperti penyedia database (Supabase) dan penyedia pengiriman email (Brevo). Masing-masing tunduk pada kebijakan privasi mereka sendiri.',
+        right1: 'Kamu bisa mengubah nama/nama panggilan kapan saja lewat fitur edit profil.',
+        right2: 'Kamu bisa meminta penghapusan akun beserta data terkait dengan menghubungi kami.',
+        p6: 'Kebijakan Privasi ini dapat diperbarui sewaktu-waktu. Perubahan akan diinformasikan melalui halaman ini beserta tanggal pembaruannya.',
+        p7: 'Ada pertanyaan soal privasi data kamu? Hubungi kami di',
+        crossTitle: 'Syarat Layanan',
+        crossDesc: 'Baca aturan penggunaan dan tanggung jawab dalam memakai OBBY AI.',
+        backLink: '← Kembali',
+      },
+      en: {
+        navBack: '← Back to App',
+        eyebrow: 'Legal Document',
+        h1: 'Privacy Policy',
+        updated: 'Last updated: July 12, 2026',
+        intro: 'This policy explains what data we collect when you use OBBY AI, how that data is used, and how we protect it.',
+        tldrTitle: 'Quick summary',
+        tldr1: 'We store account data (name, email) and chat history so it can sync across your devices.',
+        tldr2: 'Your password is always stored encrypted (hashed), never as plain text.',
+        tldr3: 'We never sell your personal data to anyone.',
+        tldr4: 'You can update your profile or request account deletion at any time.',
+        tldrNote: 'This summary is just a quick read — it doesn\u2019t replace the full text below.',
+        tocTitle: 'Table of Contents',
+        h2_1: 'Data We Collect',
+        h2_2: 'How We Use Your Data',
+        h2_3: 'Storage & Security',
+        h2_4: 'Third Parties',
+        h2_5: 'Your Rights',
+        h2_6: 'Changes to This Policy',
+        h2_7: 'Contact',
+        d1label: 'Account data:',
+        d1desc: 'name, nickname, and email when you register.',
+        d2label: 'Chat history:',
+        d2desc: 'the content of your conversations with OBBY AI, stored so it can sync across your devices.',
+        d3label: 'Technical data:',
+        d3desc: 'basic information such as login times, used for account security purposes.',
+        use1: 'Providing and improving the OBBY AI service.',
+        use2: 'Sending OTP codes for email verification and password resets.',
+        use3: 'Storing chat history so it can be accessed again in future sessions.',
+        noSell: 'We do not sell your personal data to anyone.',
+        p3: 'Your password is stored in encrypted (hashed) form, never as plain text. Data is stored on third-party database infrastructure (Supabase) that follows industry-standard security practices.',
+        p4: 'We use third-party services to support OBBY AI\u2019s operations, such as a database provider (Supabase) and an email delivery provider (Brevo). Each is subject to its own privacy policy.',
+        right1: 'You can change your name/nickname at any time via the edit profile feature.',
+        right2: 'You can request deletion of your account and related data by contacting us.',
+        p6: 'This Privacy Policy may be updated from time to time. Changes will be announced on this page along with the update date.',
+        p7: 'Have a question about your data privacy? Contact us at',
+        crossTitle: 'Terms of Service',
+        crossDesc: 'Read the rules and responsibilities for using OBBY AI.',
+        backLink: '← Back',
+      },
+    };
+
+    function applyLang(lang) {
+      document.documentElement.lang = lang;
+      document.querySelectorAll('[data-i18n]').forEach((el) => {
+        const val = I18N[lang][el.dataset.i18n];
+        if (val !== undefined) el.textContent = val;
+      });
+      const langToggle = document.getElementById('langToggle');
+      if (langToggle) langToggle.textContent = lang.toUpperCase();
+      localStorage.setItem('lang', lang);
+    }
+
+    let currentLang = localStorage.getItem('lang') || 'id';
+    applyLang(currentLang);
+
+    document.getElementById('langToggle').addEventListener('click', () => {
+      currentLang = currentLang === 'id' ? 'en' : 'id';
+      applyLang(currentLang);
+    });
+
+    // ---------- theme: ikut preferensi tema yang sama dengan aplikasi utama (localStorage 'theme') ----------
+    const savedTheme = localStorage.getItem('theme') || 'dark';
+    document.body.setAttribute('data-theme', savedTheme);
+  </script>
 </body>
 </html>
