@@ -567,7 +567,31 @@ function inlineFormat(str) {
   return s;
 }
 
-function renderMarkdown(text) {
+function renderMarkdown(rawText) {
+  // Fallback jaga-jaga: kalau AI lupa bungkus kode dengan triple backtick (terutama
+  // buat dokumen HTML/CSS/JS penuh), deteksi otomatis dan bungkus sendiri di sini,
+  // supaya kotak kode + tombol Salin tetap muncul walau instruksi ke AI terlewat.
+  let text = rawText;
+  const hasCodeFence = /```/.test(text);
+  if (!hasCodeFence) {
+    const trimmed = text.trim();
+    const looksLikeCode =
+      /^<!DOCTYPE html/i.test(trimmed) ||
+      /^<html[\s>]/i.test(trimmed) ||
+      /^<\?php/.test(trimmed) ||
+      /^(import |from |def |class |function |const |let |var |#include|package |using System)/.test(trimmed);
+    if (looksLikeCode) {
+      let lang = 'text';
+      if (/^<!DOCTYPE html/i.test(trimmed) || /^<html[\s>]/i.test(trimmed)) lang = 'html';
+      else if (/^<\?php/.test(trimmed)) lang = 'php';
+      else if (/^(import |from |def |class )/.test(trimmed)) lang = 'python';
+      else if (/^(function |const |let |var )/.test(trimmed)) lang = 'javascript';
+      else if (/^#include/.test(trimmed)) lang = 'cpp';
+      else if (/^using System/.test(trimmed)) lang = 'csharp';
+      text = `\`\`\`${lang}\n${trimmed}\n\`\`\``;
+    }
+  }
+
   // Simpan blok kode dulu (utuh, gak diapa-apain lagi) supaya konten di dalamnya
   // -- termasuk kalau ada rumus matematika di dalam contoh kode -- gak ikut ke-parse.
   const codeBlocks = [];
