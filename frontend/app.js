@@ -558,12 +558,83 @@ if (window.innerWidth >= 821) {
 
 // ---------- Lightweight markdown ----------
 function escapeHtml(str) { return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+
+function inlineFormat(str) {
+  let s = escapeHtml(str);
+  s = s.replace(/`([^`]+)`/g, '<code>$1</code>');
+  s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  s = s.replace(/(?<!\*)\*([^*\n]+)\*(?!\*)/g, '<em>$1</em>');
+  return s;
+}
+
 function renderMarkdown(text) {
-  let escaped = escapeHtml(text);
-  escaped = escaped.replace(/```([\s\S]*?)```/g, (_, code) => `<pre><code>${code.trim()}</code></pre>`);
-  escaped = escaped.replace(/`([^`]+)`/g, '<code>$1</code>');
-  escaped = escaped.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-  return escaped;
+  // Simpan blok kode dulu (utuh, gak diapa-apain lagi) supaya konten di dalamnya
+  // -- termasuk kalau ada rumus matematika di dalam contoh kode -- gak ikut ke-parse.
+  const codeBlocks = [];
+  const withPlaceholders = text.replace(/```([\s\S]*?)```/g, (_, code) => {
+    codeBlocks.push(code.trim());
+    return `\u0000CODEBLOCK${codeBlocks.length - 1}\u0000`;
+  });
+
+  const lines = withPlaceholders.split('\n');
+  let html = '';
+  let inUl = false;
+  let inOl = false;
+
+  function closeLists() {
+    if (inUl) { html += '</ul>'; inUl = false; }
+    if (inOl) { html += '</ol>'; inOl = false; }
+  }
+
+  lines.forEach((line) => {
+    const ulMatch = line.match(/^\s*[-*]\s+(.*)$/);
+    const olMatch = line.match(/^\s*\d+\.\s+(.*)$/);
+    const h3Match = line.match(/^###\s+(.*)$/);
+    const h2Match = line.match(/^##\s+(.*)$/);
+    const h1Match = line.match(/^#\s+(.*)$/);
+
+    if (ulMatch) {
+      if (!inUl) { closeLists(); html += '<ul>'; inUl = true; }
+      html += `<li>${inlineFormat(ulMatch[1])}</li>`;
+    } else if (olMatch) {
+      if (!inOl) { closeLists(); html += '<ol>'; inOl = true; }
+      html += `<li>${inlineFormat(olMatch[1])}</li>`;
+    } else if (h3Match) {
+      closeLists(); html += `<h3>${inlineFormat(h3Match[1])}</h3>`;
+    } else if (h2Match) {
+      closeLists(); html += `<h2>${inlineFormat(h2Match[1])}</h2>`;
+    } else if (h1Match) {
+      closeLists(); html += `<h1>${inlineFormat(h1Match[1])}</h1>`;
+    } else if (line.trim() === '') {
+      closeLists();
+    } else {
+      closeLists();
+      html += `<p>${inlineFormat(line)}</p>`;
+    }
+  });
+  closeLists();
+
+  // Kembalikan blok kode di posisi aslinya.
+  html = html.replace(/\u0000CODEBLOCK(\d+)\u0000/g, (_, idx) => {
+    return `<pre><code>${escapeHtml(codeBlocks[Number(idx)])}</code></pre>`;
+  });
+
+  return html;
+}
+
+// Render rumus matematika (LaTeX) di dalam elemen tertentu pakai KaTeX, kalau library-nya sudah termuat.
+function renderMathIn(el) {
+  if (window.renderMathInElement) {
+    window.renderMathInElement(el, {
+      delimiters: [
+        { left: '$$', right: '$$', display: true },
+        { left: '\\[', right: '\\]', display: true },
+        { left: '\\(', right: '\\)', display: false },
+        { left: '$', right: '$', display: false },
+      ],
+      throwOnError: false,
+    });
+  }
 }
 
 // ---------- History rendering ----------
@@ -1026,6 +1097,7 @@ function buildMessageRow(msg) {
   const bubble = document.createElement('div');
   bubble.className = 'msg-bubble';
   bubble.innerHTML = renderMarkdown(msg.content);
+  renderMathIn(bubble);
   col.appendChild(bubble);
 
   const actions = document.createElement('div');
