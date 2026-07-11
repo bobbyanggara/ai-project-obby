@@ -13,6 +13,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/mhchem.min.js"></script>
 <style>
   .auth-cta-btn {
     position: relative;
@@ -80,13 +81,12 @@
     box-shadow: 0 6px 20px -4px rgba(255, 107, 107, 0.6);
   }
 
-  /* ---- Modal konfirmasi logout & edit profil (liquid glass) ---- */
+  /* ---- Modal konfirmasi logout ---- */
   .confirm-modal-backdrop {
     position: fixed;
     inset: 0;
-    background: rgba(6, 11, 24, 0.55);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    background: rgba(6, 11, 24, 0.6);
+    backdrop-filter: blur(6px);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -102,16 +102,14 @@
   .confirm-modal-card {
     width: 320px;
     max-width: 90vw;
-    background: var(--glass-bg-strong);
-    border: 1px solid var(--glass-border);
-    backdrop-filter: blur(28px) saturate(160%);
-    -webkit-backdrop-filter: blur(28px) saturate(160%);
-    border-radius: 22px;
+    background: rgba(20, 24, 38, 0.9);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 18px;
     padding: 24px;
     text-align: center;
     transform: translateY(10px) scale(0.97);
     transition: transform 0.2s ease;
-    box-shadow: 0 20px 60px -20px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.06);
+    box-shadow: 0 20px 60px -10px rgba(0,0,0,0.6);
   }
   .confirm-modal-backdrop.open .confirm-modal-card {
     transform: translateY(0) scale(1);
@@ -129,12 +127,12 @@
   .confirm-modal-title {
     font-size: 16px;
     font-weight: 700;
-    color: var(--text-primary);
+    color: #fff;
     margin: 0 0 6px;
   }
   .confirm-modal-text {
     font-size: 13.5px;
-    color: var(--text-muted);
+    color: #aaa;
     margin: 0 0 20px;
     line-height: 1.4;
   }
@@ -151,15 +149,14 @@
     font-weight: 600;
     cursor: pointer;
     font-family: inherit;
-    transition: transform 0.15s ease, opacity 0.15s ease, background 0.15s ease;
+    transition: transform 0.15s ease, opacity 0.15s ease;
   }
   .confirm-modal-actions button:active { transform: scale(0.96); }
-  .confirm-modal-cancel-btn {
-    background: var(--glass-bg-strong);
-    border: 1px solid var(--glass-border);
-    color: var(--text-primary);
+  #logoutCancelBtn {
+    background: rgba(255,255,255,0.08);
+    color: #eee;
   }
-  .confirm-modal-cancel-btn:hover { background: var(--glass-border); }
+  #logoutCancelBtn:hover { background: rgba(255,255,255,0.14); }
   #logoutConfirmBtn {
     background: linear-gradient(135deg, #FF6B6B, #FF9472);
     color: #fff;
@@ -242,6 +239,54 @@
   .msg-bubble h3 { font-size: 1.05em; }
   .msg-bubble ul, .msg-bubble ol { margin: 6px 0 10px; padding-left: 22px; }
   .msg-bubble li { margin: 3px 0; }
+
+  /* ---- Kotak kode dengan header + tombol salin ---- */
+  .code-block-wrap {
+    margin: 10px 0;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(0,0,0,0.35);
+  }
+  .code-block-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 12px;
+    background: rgba(255,255,255,0.04);
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    font-size: 12px;
+  }
+  .code-block-lang {
+    color: #888;
+    font-family: 'JetBrains Mono', monospace;
+    text-transform: lowercase;
+  }
+  .code-copy-btn {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background: rgba(255,255,255,0.06);
+    border: none;
+    border-radius: 6px;
+    padding: 4px 9px;
+    color: #ccc;
+    font-size: 12px;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+  .code-copy-btn:hover { background: rgba(255,255,255,0.12); color: #fff; }
+  .code-copy-btn.copied { background: rgba(107,255,176,0.18); color: #6BFFB0; }
+  .code-block-wrap pre {
+    margin: 0;
+    padding: 12px 14px;
+    overflow-x: auto;
+  }
+  .code-block-wrap pre code {
+    background: none;
+    padding: 0;
+  }
 </style>
 </head>
 <body>
@@ -282,7 +327,7 @@
           </button>
           <button id="langToggle" class="lang-btn" data-i18n-tooltip="tooltipLang" data-tooltip="Ganti bahasa" aria-label="Ganti bahasa">ID/EN</button>
         </div>
-        <button id="clearPartialBtn" class="text-btn" data-i18n="clearPartial" data-i18n-tooltip="tooltipClearPartial" aria-label="Hapus sebagian riwayat" data-tooltip="Hapus sebagian riwayat obrolan">Hapus sebagian</button>
+        <button id="clearPartialBtn" class="text-btn" aria-label="Hapus sebagian riwayat" data-tooltip="Hapus sebagian riwayat obrolan">Hapus sebagian</button>
         <button id="clearAllBtn" class="text-btn danger" data-i18n="clearAll" data-i18n-tooltip="tooltipClearAll" data-tooltip="Hapus semua riwayat obrolan">Hapus semua riwayat</button>
 
         <div id="userInfoBox" class="user-info-box" style="display:none;">
@@ -399,7 +444,7 @@
       <p class="confirm-modal-title">Yakin mau logout?</p>
       <p class="confirm-modal-text">Riwayat chat yang sudah tersimpan tetap aman di akun kamu. Kamu bisa login lagi kapan saja.</p>
       <div class="confirm-modal-actions">
-        <button id="logoutCancelBtn" class="confirm-modal-cancel-btn" type="button">Batal</button>
+        <button id="logoutCancelBtn" type="button">Batal</button>
         <button id="logoutConfirmBtn" type="button">Ya, Logout</button>
       </div>
     </div>
@@ -409,14 +454,16 @@
   <div id="editProfileBackdrop" class="confirm-modal-backdrop">
     <div class="confirm-modal-card" style="text-align:left;">
       <p class="confirm-modal-title" style="text-align:center; margin-bottom: 18px;">Edit Profil</p>
-      <label style="font-size:12.5px; color:var(--text-muted); display:block; margin-bottom:4px;">Nama Lengkap</label>
-      <input type="text" id="editNameInput" class="modal-input" placeholder="Nama lengkap kamu">
-      <label style="font-size:12.5px; color:var(--text-muted); display:block; margin-bottom:4px;">Nama Panggilan</label>
-      <input type="text" id="editNicknameInput" class="modal-input" placeholder="Panggilan kamu (misal: Bob)" style="margin-bottom:6px;">
-      <p style="font-size:11.5px; color:var(--text-faint); margin:0 0 14px;">Nama panggilan dipakai di sapaan halaman utama.</p>
+      <label style="font-size:12.5px; color:#999; display:block; margin-bottom:4px;">Nama Lengkap</label>
+      <input type="text" id="editNameInput" placeholder="Nama lengkap kamu"
+        style="width:100%; padding:10px 12px; margin-bottom:14px; border-radius:10px; border:1px solid rgba(255,255,255,0.12); background:rgba(0,0,0,0.3); color:#eee; font-size:14px; box-sizing:border-box;">
+      <label style="font-size:12.5px; color:#999; display:block; margin-bottom:4px;">Nama Panggilan</label>
+      <input type="text" id="editNicknameInput" placeholder="Panggilan kamu (misal: Bob)"
+        style="width:100%; padding:10px 12px; margin-bottom:6px; border-radius:10px; border:1px solid rgba(255,255,255,0.12); background:rgba(0,0,0,0.3); color:#eee; font-size:14px; box-sizing:border-box;">
+      <p style="font-size:11.5px; color:#777; margin:0 0 14px;">Nama panggilan dipakai di sapaan halaman utama.</p>
       <p id="editProfileMsg" style="font-size:13px; min-height:16px; margin:0 0 8px;"></p>
       <div class="confirm-modal-actions">
-        <button id="editProfileCancelBtn" class="confirm-modal-cancel-btn" type="button">Batal</button>
+        <button id="editProfileCancelBtn" type="button">Batal</button>
         <button id="editProfileSaveBtn" type="button" style="background:linear-gradient(135deg, var(--accent-1, #7C9CFF), var(--accent-2, #B37CFF)); color:#fff;">Simpan</button>
       </div>
     </div>

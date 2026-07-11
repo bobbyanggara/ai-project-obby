@@ -7,8 +7,6 @@ const I18N = {
     newChat: 'Obrolan baru',
 
     history: 'Riwayat',
-    clearPartial: 'Hapus sebagian',
-    tooltipClearPartial: 'Hapus sebagian riwayat obrolan',
     clearAll: 'Hapus semua riwayat',
     emptyTitle: 'Halo, ada yang bisa dibantu?',
     emptySubtitle: 'Tanyakan apa saja — dari ide, kode, sampai obrolan santai.',
@@ -54,8 +52,6 @@ const I18N = {
     newChat: 'New chat',
 
     history: 'History',
-    clearPartial: 'Delete part of history',
-    tooltipClearPartial: 'Delete part of chat history',
     clearAll: 'Clear all history',
     emptyTitle: 'Hi, what can I help with?',
     emptySubtitle: 'Ask anything — ideas, code, or just a chat.',
@@ -525,6 +521,12 @@ langToggle.addEventListener('click', () => {
   // Update greeting text based on current local time & nama user (kalau login).
   updateGreetingText();
 
+  // Update outer buttons immediately on language toggle.
+
+  if (clearPartialBtn) {
+    clearPartialBtn.textContent = currentLang === 'id' ? 'Hapus sebagian' : 'Delete part of the history';
+  }
+
   applyI18n();
   renderMessages();
   renderSuggestions();
@@ -569,8 +571,8 @@ function renderMarkdown(text) {
   // Simpan blok kode dulu (utuh, gak diapa-apain lagi) supaya konten di dalamnya
   // -- termasuk kalau ada rumus matematika di dalam contoh kode -- gak ikut ke-parse.
   const codeBlocks = [];
-  const withPlaceholders = text.replace(/```([\s\S]*?)```/g, (_, code) => {
-    codeBlocks.push(code.trim());
+  const withPlaceholders = text.replace(/```(\w*)\n?([\s\S]*?)```/g, (_, lang, code) => {
+    codeBlocks.push({ lang: lang || '', code: code.trim() });
     return `\u0000CODEBLOCK${codeBlocks.length - 1}\u0000`;
   });
 
@@ -612,17 +614,31 @@ function renderMarkdown(text) {
   });
   closeLists();
 
-  // Kembalikan blok kode di posisi aslinya.
+  // Kembalikan blok kode di posisi aslinya, dibungkus header (nama bahasa + tombol salin).
   html = html.replace(/\u0000CODEBLOCK(\d+)\u0000/g, (_, idx) => {
-    return `<pre><code>${escapeHtml(codeBlocks[Number(idx)])}</code></pre>`;
+    const block = codeBlocks[Number(idx)];
+    const langLabel = block.lang ? escapeHtml(block.lang) : 'text';
+    return `<div class="code-block-wrap">
+      <div class="code-block-header">
+        <span class="code-block-lang">${langLabel}</span>
+        <button type="button" class="code-copy-btn">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><rect x="9" y="9" width="12" height="12" rx="2" stroke="currentColor" stroke-width="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10" stroke="currentColor" stroke-width="2"/></svg>
+          <span class="code-copy-label">Salin</span>
+        </button>
+      </div>
+      <pre><code>${escapeHtml(block.code)}</code></pre>
+    </div>`;
   });
 
   return html;
 }
 
-// Render rumus matematika (LaTeX) di dalam elemen tertentu pakai KaTeX, kalau library-nya sudah termuat.
+// Render rumus matematika/fisika/kimia (LaTeX) di dalam elemen tertentu pakai KaTeX,
+// kalau library-nya sudah termuat. Support delimiter $...$, $$...$$, \(...\), \[...\]
+// -- ini yang paling umum dipakai model AI buat notasi matematika, fisika, maupun kimia (mhchem-style).
 function renderMathIn(el) {
-  if (window.renderMathInElement) {
+  if (!window.renderMathInElement) return;
+  try {
     window.renderMathInElement(el, {
       delimiters: [
         { left: '$$', right: '$$', display: true },
@@ -630,10 +646,36 @@ function renderMathIn(el) {
         { left: '\\(', right: '\\)', display: false },
         { left: '$', right: '$', display: false },
       ],
-      throwOnError: false,
+      throwOnError: false, // kalau ada notasi yang gagal di-parse, tampilkan teks asli aja, jangan bikin halaman error
+      strict: false,
     });
+  } catch (err) {
+    console.warn('KaTeX render gagal, fallback ke teks biasa:', err);
   }
 }
+
+// Event delegation buat tombol "Salin" di kotak kode (dipasang sekali, kerja buat semua bubble termasuk yang baru muncul nanti).
+document.addEventListener('click', (e) => {
+  const btn = e.target.closest('.code-copy-btn');
+  if (!btn) return;
+
+  const wrap = btn.closest('.code-block-wrap');
+  const codeEl = wrap ? wrap.querySelector('pre code') : null;
+  if (!codeEl) return;
+
+  navigator.clipboard.writeText(codeEl.textContent).then(() => {
+    const label = btn.querySelector('.code-copy-label');
+    const originalText = label.textContent;
+    btn.classList.add('copied');
+    label.textContent = 'Tersalin!';
+    setTimeout(() => {
+      btn.classList.remove('copied');
+      label.textContent = originalText;
+    }, 1500);
+  }).catch(() => {
+    showToast(currentLang === 'id' ? 'Gagal menyalin kode' : 'Failed to copy code');
+  });
+});
 
 // ---------- History rendering ----------
 function renderHistory() {
@@ -855,6 +897,12 @@ function showPartialDeleteModal() {
   if (!selectableConvs.length) return;
 
   // simple modal inline (tanpa dependency CSS khusus)
+
+  // Update outer buttons too (the "Hapus sebagian" button label in sidebar).
+  // Ensure it changes when language toggles.
+  if (clearPartialBtn) {
+    clearPartialBtn.textContent = currentLang === 'id' ? 'Hapus sebagian' : 'Delete part of the history';
+  }
 
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
