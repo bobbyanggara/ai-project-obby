@@ -1105,7 +1105,6 @@ function renderMessages() {
   }
   regenBtn.style.visibility = conv.messages.some((m) => m.role === 'assistant') ? 'visible' : 'hidden';
   conv.messages.forEach((msg) => messagesEl.appendChild(buildMessageRow(msg)));
-  scrollToBottom();
 }
 
 const scrollState = {
@@ -1200,7 +1199,6 @@ function appendTypingRow() {
   col.appendChild(bubble);
   row.appendChild(col);
   messagesEl.appendChild(row);
-  scrollToBottom();
 }
 function removeTypingRow() { const row = document.getElementById('typingRow'); if (row) row.remove(); }
 
