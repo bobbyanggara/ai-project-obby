@@ -57,12 +57,9 @@
   input {
     width: 100%; padding: 12px 14px; margin: 6px 0; border-radius: 10px;
     border: 1px solid rgba(255,255,255,0.14); background: rgba(0,0,0,0.28);
-    color: #eee; font-size: 14px;
+    color: #eee; font-size: 22px; text-align: center; letter-spacing: 10px; font-weight: 700;
   }
   input:focus { outline: none; border-color: #3FA9F5; }
-  input.otp-input {
-    text-align: center; font-size: 22px; letter-spacing: 10px; font-weight: 700;
-  }
   button {
     width: 100%; padding: 12px; margin-top: 14px; border: none; border-radius: 10px;
     background: linear-gradient(135deg, #2F6BFF, #22D3EE); color: white;
@@ -88,24 +85,32 @@
       <img src="icon-192.png" alt="OBBY AI" class="brand-logo">
       <div class="brand">O B B Y</div>
     </div>
-    <h2>Verifikasi Email</h2>
-    <p class="desc">Kode OTP sudah dikirim ke <strong id="emailShown"></strong>. Cek juga folder Spam kalau belum muncul.</p>
-    <input type="text" id="otpInput" class="otp-input" placeholder="000000" maxlength="6" inputmode="numeric" required>
-    <button type="submit" id="verifyBtn">Verifikasi</button>
-    <button type="button" class="secondary" id="resendBtn">Kirim ulang kode</button>
+    <h2 data-i18n="verifyHeading">Verifikasi Email</h2>
+    <p class="desc" id="verifyDesc"></p>
+    <input type="text" id="otpInput" placeholder="000000" maxlength="6" inputmode="numeric" required>
+    <button type="submit" id="verifyBtn" data-i18n="verifyBtn">Verifikasi</button>
+    <button type="button" class="secondary" id="resendBtn" data-i18n="resendBtn">Kirim ulang kode</button>
     <p id="msg"></p>
-    <p class="footer"><a href="login.html">← Kembali ke halaman Login</a></p>
+    <p class="footer"><a href="login.html" data-i18n="backToLogin">← Kembali ke Login</a></p>
   </form>
 
+<script src="auth-i18n.js"></script>
 <script src="auth.js"></script>
 <script>
+  function escapeHtmlSimple(str) {
+    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
   const params = new URLSearchParams(window.location.search);
   const email = params.get('email') || '';
-  document.getElementById('emailShown').textContent = email;
+
+  document.getElementById('verifyDesc').innerHTML = t('verifyDescTemplate', {
+    email: `<strong>${escapeHtmlSimple(email)}</strong>`,
+  });
 
   if (!email) {
     document.getElementById('msg').style.color = '#FF6B6B';
-    document.getElementById('msg').textContent = 'Email tidak ditemukan, silakan daftar/login ulang.';
+    document.getElementById('msg').textContent = t('msgEmailNotFound');
   }
 
   document.getElementById('verifyForm').addEventListener('submit', async (e) => {
@@ -116,13 +121,13 @@
 
     btn.disabled = true;
     msg.style.color = '#aaa';
-    msg.textContent = 'Memverifikasi...';
+    msg.textContent = t('msgVerifying');
 
     try {
       const data = await ObbyAuth.verifyEmail({ email, otp });
       ObbyAuth.setSession(data.token, data.user);
       msg.style.color = '#6BFFB0';
-      msg.textContent = 'Pendaftaran Berhasil!, Silahkan login kembali.';
+      msg.textContent = t('msgSuccessRedirectChat');
       setTimeout(() => { window.location.href = 'index.html'; }, 800);
     } catch (err) {
       msg.style.color = '#FF6B6B';
@@ -134,11 +139,11 @@
   document.getElementById('resendBtn').addEventListener('click', async () => {
     const msg = document.getElementById('msg');
     msg.style.color = '#aaa';
-    msg.textContent = 'Mengirim ulang...';
+    msg.textContent = t('msgResending');
     try {
       await ObbyAuth.resendVerification(email);
       msg.style.color = '#6BFFB0';
-      msg.textContent = 'Kode baru sudah dikirim.';
+      msg.textContent = t('msgResentSuccess');
     } catch (err) {
       msg.style.color = '#FF6B6B';
       msg.textContent = err.message;

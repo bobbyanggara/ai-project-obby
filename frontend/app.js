@@ -8,6 +8,7 @@ const I18N = {
 
     history: 'Riwayat',
     clearAll: 'Hapus semua riwayat',
+    clearPartial: 'Hapus sebagian',
     emptyTitle: 'Halo, ada yang bisa dibantu?',
     emptySubtitle: 'Tanyakan apa saja — dari ide, kode, sampai obrolan santai.',
 
@@ -40,6 +41,7 @@ const I18N = {
     tooltipTheme: 'Ganti tema terang/gelap',
     tooltipLang: 'Ganti bahasa',
     tooltipClearAll: 'Hapus semua riwayat obrolan',
+    tooltipClearPartial: 'Hapus sebagian riwayat (sisa 3 obrolan terbaru)',
     tooltipChatOptions: 'Opsi obrolan',
     tooltipRegen: 'Buat ulang jawaban',
     tooltipSend: 'Kirim pesan',
@@ -53,6 +55,7 @@ const I18N = {
 
     history: 'History',
     clearAll: 'Clear all history',
+    clearPartial: 'Delete part of the history',
     emptyTitle: 'Hi, what can I help with?',
     emptySubtitle: 'Ask anything — ideas, code, or just a chat.',
     sugg1: 'Explain recursion with an analogy',
@@ -83,6 +86,7 @@ const I18N = {
     tooltipTheme: 'Toggle light/dark theme',
     tooltipLang: 'Change language',
     tooltipClearAll: 'Clear all chat history',
+    tooltipClearPartial: 'Delete part of the history (keep the latest 3 conversations)',
     tooltipChatOptions: 'Chat options',
     tooltipRegen: 'Regenerate response',
     tooltipSend: 'Send message',
@@ -521,12 +525,6 @@ langToggle.addEventListener('click', () => {
   // Update greeting text based on current local time & nama user (kalau login).
   updateGreetingText();
 
-  // Update outer buttons immediately on language toggle.
-
-  if (clearPartialBtn) {
-    clearPartialBtn.textContent = currentLang === 'id' ? 'Hapus sebagian' : 'Delete part of the history';
-  }
-
   applyI18n();
   renderMessages();
   renderSuggestions();
@@ -954,12 +952,6 @@ function showPartialDeleteModal() {
   if (!selectableConvs.length) return;
 
   // simple modal inline (tanpa dependency CSS khusus)
-
-  // Update outer buttons too (the "Hapus sebagian" button label in sidebar).
-  // Ensure it changes when language toggles.
-  if (clearPartialBtn) {
-    clearPartialBtn.textContent = currentLang === 'id' ? 'Hapus sebagian' : 'Delete part of the history';
-  }
 
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
