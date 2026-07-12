@@ -23,6 +23,7 @@ const I18N = {
     imageOnlyDefaultText: 'Tolong lihat dan jelaskan gambar ini.',
     errorNotImage: 'File yang dipilih bukan gambar',
     errorImageProcess: 'Gagal memproses gambar, coba file lain',
+    imageSavedToast: 'Gambar tersimpan',
     editTitle: 'Edit judul',
     titleSaved: 'Judul disimpan',
     clearedAll: 'Semua riwayat dihapus',
@@ -70,6 +71,7 @@ const I18N = {
     imageOnlyDefaultText: 'Please look at and describe this image.',
     errorNotImage: 'The selected file is not an image',
     errorImageProcess: 'Failed to process the image, try another file',
+    imageSavedToast: 'Image saved',
     editTitle: 'Edit title',
     titleSaved: 'Title saved',
     clearedAll: 'All history cleared',
@@ -422,6 +424,17 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
+// Ubah data URL (data:image/jpeg;base64,xxxx) jadi Blob -- dipakai buat Web Share API / download.
+function dataUrlToBlob(dataUrl) {
+  const [header, base64] = dataUrl.split(',');
+  const mimeMatch = /data:(.*?);base64/.exec(header);
+  const mime = mimeMatch ? mimeMatch[1] : 'image/jpeg';
+  const binary = atob(base64);
+  const array = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) array[i] = binary.charCodeAt(i);
+  return new Blob([array], { type: mime });
+}
+
 // ---------- Lightbox gambar ----------
 const imageLightbox = document.getElementById('imageLightbox');
 const imageLightboxImg = document.getElementById('imageLightboxImg');
@@ -440,17 +453,37 @@ function closeImageLightbox() {
 }
 if (imageLightboxClose) imageLightboxClose.addEventListener('click', closeImageLightbox);
 if (imageLightboxDownload) {
-  imageLightboxDownload.addEventListener('click', () => {
+  imageLightboxDownload.addEventListener('click', async () => {
     if (!lightboxCurrentSrc) return;
+
     // Deteksi ekstensi dari data URL (data:image/png;base64,... -> png), fallback ke jpg.
     const extMatch = /^data:image\/(\w+);/.exec(lightboxCurrentSrc);
     const ext = extMatch ? extMatch[1].replace('jpeg', 'jpg') : 'jpg';
+    const filename = `obby-ai-${Date.now()}.${ext}`;
+    const blob = dataUrlToBlob(lightboxCurrentSrc);
+
+    // Cara 1 (paling reliable di HP): Web Share API dengan file -- munculin share sheet
+    // native yang ada opsi "Simpan ke Galeri/Foto" langsung.
+    const file = new File([blob], filename, { type: blob.type });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({ files: [file] });
+        return;
+      } catch (err) {
+        // User batal share, atau gagal -- lanjut ke cara 2 di bawah sebagai fallback.
+      }
+    }
+
+    // Cara 2 (fallback, terutama buat desktop): download via Blob URL.
+    const blobUrl = URL.createObjectURL(blob);
     const link = document.createElement('a');
-    link.href = lightboxCurrentSrc;
-    link.download = `obby-ai-${Date.now()}.${ext}`;
+    link.href = blobUrl;
+    link.download = filename;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 2000);
+    showToast(t('imageSavedToast'));
   });
 }
 if (imageLightbox) {
