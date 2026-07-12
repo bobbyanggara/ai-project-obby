@@ -399,6 +399,22 @@
     justify-content: center;
   }
   .image-lightbox-close:hover { background: rgba(255,255,255,0.2); }
+  .image-lightbox-download {
+    position: absolute;
+    top: 18px;
+    right: 66px;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255,255,255,0.12);
+    color: #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .image-lightbox-download:hover { background: rgba(255,255,255,0.2); }
 </style>
 </head>
 <body>
@@ -553,6 +569,9 @@
 
   <!-- Lightbox buat lihat gambar full-size -->
   <div id="imageLightbox" class="image-lightbox">
+    <button type="button" id="imageLightboxDownload" class="image-lightbox-download" aria-label="Download gambar">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 19h16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
     <button type="button" id="imageLightboxClose" class="image-lightbox-close" aria-label="Tutup">✕</button>
     <img id="imageLightboxImg" alt="Gambar penuh">
   </div>

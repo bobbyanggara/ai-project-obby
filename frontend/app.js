@@ -426,9 +426,12 @@ document.addEventListener('keydown', (e) => {
 const imageLightbox = document.getElementById('imageLightbox');
 const imageLightboxImg = document.getElementById('imageLightboxImg');
 const imageLightboxClose = document.getElementById('imageLightboxClose');
+const imageLightboxDownload = document.getElementById('imageLightboxDownload');
+let lightboxCurrentSrc = '';
 
 function openImageLightbox(src) {
   if (!imageLightbox || !imageLightboxImg) return;
+  lightboxCurrentSrc = src;
   imageLightboxImg.src = src;
   imageLightbox.classList.add('open');
 }
@@ -436,6 +439,20 @@ function closeImageLightbox() {
   if (imageLightbox) imageLightbox.classList.remove('open');
 }
 if (imageLightboxClose) imageLightboxClose.addEventListener('click', closeImageLightbox);
+if (imageLightboxDownload) {
+  imageLightboxDownload.addEventListener('click', () => {
+    if (!lightboxCurrentSrc) return;
+    // Deteksi ekstensi dari data URL (data:image/png;base64,... -> png), fallback ke jpg.
+    const extMatch = /^data:image\/(\w+);/.exec(lightboxCurrentSrc);
+    const ext = extMatch ? extMatch[1].replace('jpeg', 'jpg') : 'jpg';
+    const link = document.createElement('a');
+    link.href = lightboxCurrentSrc;
+    link.download = `obby-ai-${Date.now()}.${ext}`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  });
+}
 if (imageLightbox) {
   imageLightbox.addEventListener('click', (e) => {
     if (e.target === imageLightbox) closeImageLightbox();
