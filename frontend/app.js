@@ -1324,7 +1324,10 @@ async function requestAIReply(conv) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         messages: conv.messages.map(({ role, content }) => ({ role, content })),
-        systemPrompt: t('systemPrompt'),
+        // systemPrompt sengaja TIDAK dikirim dari sini -- biar backend (api/chat.js) selalu
+        // pakai system prompt lengkap yang ada di sana (instruksi format matematika, kode,
+        // kimia, generate gambar, dll). Kalau dikirim dari sini, itu akan MENG-OVERRIDE
+        // dan bikin instruksi di backend gak kepakai sama sekali.
         ...(imagePayload ? { image: imagePayload } : {}),
       }),
     });

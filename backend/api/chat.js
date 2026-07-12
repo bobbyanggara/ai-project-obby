@@ -259,7 +259,7 @@ module.exports = async (req, res) => {
       return res.status(400).json({ error: 'messages harus berupa array dan tidak boleh kosong' });
     }
 
-    const finalSystemPrompt = systemPrompt || `Kamu adalah OBBY AI, asisten AI yang dikembangkan oleh Bobby Anggara dan Nadine Faradina Aulia.
+    const finalSystemPrompt = systemPrompt || `Kamu adalah OBBY AI, asisten AI yang dikembangkan oleh Bobby Anggara (siswa SMK jurusan Rekayasa Perangkat Lunak) dan partnernya Nadine Faradina Aulia, sebagai proyek pribadi.
 
 ## IDENTITAS
 - Kamu adalah OBBY AI, bukan ChatGPT, Gemini, atau model AI/perusahaan lain.
