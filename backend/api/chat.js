@@ -321,10 +321,13 @@ Tampilan chat mendukung rendering LaTeX (KaTeX) dan notasi kimia (mhchem). Ikuti
 ## MEMBUAT GAMBAR (IMAGE GENERATION)
 Kalau user secara jelas meminta kamu MEMBUAT/MENGGAMBAR/GENERATE sebuah gambar (bukan cuma bertanya tentang gambar yang sudah ada), ikuti format ini PERSIS:
 1. Tulis balasan singkat & natural dulu (misal "Oke, ini gambarnya ya:").
-2. Di baris baru, tulis TEPAT format ini: [GENERATE_IMAGE: deskripsi gambar yang detail dan jelas, WAJIB DALAM BAHASA INGGRIS]
+2. Di baris baru, tulis TEPAT format ini: [GENERATE_IMAGE: deskripsi gambar yang detail dan jelas dalam Bahasa Inggris | orientasi]
+   - Ganti "orientasi" dengan salah satu: landscape (pemandangan/lanskap/wide), portrait (potret/vertikal/orang berdiri), atau square (ikon/logo/kotak).
+   - Kalau gak yakin, pakai landscape sebagai default.
 3. Jangan menjelaskan gambarnya lebih lanjut setelah marker itu -- sistem yang akan otomatis membuat gambarnya dari deskripsi tersebut.
-4. Contoh: "Oke, ini gambarnya ya:\n[GENERATE_IMAGE: a cute orange cat sitting on a windowsill, soft morning light, photorealistic]"
-5. Kalau user cuma bertanya TENTANG gambar (bukan minta dibuatkan gambar baru), jangan pakai format ini, jawab seperti biasa.
+4. Contoh: "Oke, ini gambarnya ya:\n[GENERATE_IMAGE: a cute orange cat sitting on a windowsill, soft morning light, photorealistic | square]"
+5. Contoh lain (pemandangan, harus landscape): "[GENERATE_IMAGE: a majestic view of Mount Fuji at sunset with cherry blossoms in the foreground, photorealistic | landscape]"
+6. Kalau user cuma bertanya TENTANG gambar (bukan minta dibuatkan gambar baru), jangan pakai format ini, jawab seperti biasa.
 
 ## BATASAN
 - Jika kamu benar-benar tidak menemukan informasi yang dicari atau ada kendala teknis, akui dengan jujur — jangan mengarang jawaban.
@@ -392,10 +395,16 @@ Kalau user secara jelas meminta kamu MEMBUAT/MENGGAMBAR/GENERATE sebuah gambar (
     let generatedImage = null;
     const genMatch = reply.match(/\[GENERATE_IMAGE:\s*([\s\S]+?)\]/i);
     if (genMatch) {
-      const imagePrompt = genMatch[1].trim();
+      const rawInner = genMatch[1].trim();
+      // Format: "deskripsi | orientasi" -- orientasi opsional, default landscape.
+      const parts = rawInner.split('|').map((p) => p.trim());
+      const imagePrompt = parts[0];
+      const rawOrientation = (parts[1] || 'landscape').toLowerCase();
+      const orientation = ['square', 'portrait', 'landscape'].includes(rawOrientation) ? rawOrientation : 'landscape';
+
       const caption = reply.replace(genMatch[0], '').trim() || 'Ini gambar yang aku buatkan:';
       try {
-        const base64 = await generateImage(imagePrompt);
+        const base64 = await generateImage(imagePrompt, orientation);
         generatedImage = `data:image/jpeg;base64,${base64}`;
         reply = caption;
       } catch (imgErr) {
