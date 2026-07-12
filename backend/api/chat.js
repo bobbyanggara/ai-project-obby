@@ -1,4 +1,5 @@
 // ---------- Groq Compound (provider utama, ada web search bawaan) ----------
+const { generateImage } = require('../lib/imageGen');
 // "groq/compound" adalah sistem dari Groq yang otomatis melakukan web search
 // kalau pertanyaan butuh info terkini (real-time), tanpa perlu setup tambahan.
 // Masih dalam free tier Groq yang sama, cuma beda nama model.
@@ -317,6 +318,14 @@ Tampilan chat mendukung rendering LaTeX (KaTeX) dan notasi kimia (mhchem). Ikuti
 - Baris kedua (pemisah header) WAJIB cuma berisi tanda strip dan pipe seperti contoh di atas, jangan diisi teks apapun.
 - Kalau satu sel butuh beberapa baris teks, boleh pakai `<br>` di dalam sel itu untuk baris baru.
 
+## MEMBUAT GAMBAR (IMAGE GENERATION)
+Kalau user secara jelas meminta kamu MEMBUAT/MENGGAMBAR/GENERATE sebuah gambar (bukan cuma bertanya tentang gambar yang sudah ada), ikuti format ini PERSIS:
+1. Tulis balasan singkat & natural dulu (misal "Oke, ini gambarnya ya:").
+2. Di baris baru, tulis TEPAT format ini: [GENERATE_IMAGE: deskripsi gambar yang detail dan jelas, WAJIB DALAM BAHASA INGGRIS]
+3. Jangan menjelaskan gambarnya lebih lanjut setelah marker itu -- sistem yang akan otomatis membuat gambarnya dari deskripsi tersebut.
+4. Contoh: "Oke, ini gambarnya ya:\n[GENERATE_IMAGE: a cute orange cat sitting on a windowsill, soft morning light, photorealistic]"
+5. Kalau user cuma bertanya TENTANG gambar (bukan minta dibuatkan gambar baru), jangan pakai format ini, jawab seperti biasa.
+
 ## BATASAN
 - Jika kamu benar-benar tidak menemukan informasi yang dicari atau ada kendala teknis, akui dengan jujur — jangan mengarang jawaban.
 - Jangan memberikan klaim yang terdengar pasti untuk hal yang sifatnya prediksi atau belum terjadi.`;
@@ -379,7 +388,23 @@ Tampilan chat mendukung rendering LaTeX (KaTeX) dan notasi kimia (mhchem). Ikuti
       }
     }
 
-    res.json({ reply, provider: usedProvider });
+    // ---------- Deteksi permintaan generate gambar ----------
+    let generatedImage = null;
+    const genMatch = reply.match(/\[GENERATE_IMAGE:\s*([\s\S]+?)\]/i);
+    if (genMatch) {
+      const imagePrompt = genMatch[1].trim();
+      const caption = reply.replace(genMatch[0], '').trim() || 'Ini gambar yang aku buatkan:';
+      try {
+        const base64 = await generateImage(imagePrompt);
+        generatedImage = `data:image/jpeg;base64,${base64}`;
+        reply = caption;
+      } catch (imgErr) {
+        console.error('Image generation error:', imgErr.message);
+        reply = `${caption}\n\n(Maaf, gagal membuat gambarnya barusan. Coba lagi ya.)`;
+      }
+    }
+
+    res.json({ reply, provider: usedProvider, ...(generatedImage ? { generatedImage } : {}) });
   } catch (err) {
     console.error('Error /api/chat:', err.message);
 

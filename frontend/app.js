@@ -1341,7 +1341,9 @@ async function requestAIReply(conv) {
       throw new Error(data?.error || `HTTP ${response.status}`);
     }
 
-    conv.messages.push({ role: 'assistant', content: data.reply, time: Date.now() });
+    const assistantMsg = { role: 'assistant', content: data.reply, time: Date.now() };
+    if (data.generatedImage) assistantMsg.image = data.generatedImage;
+    conv.messages.push(assistantMsg);
     saveConversations();
     renderMessages();
   } catch (err) {
