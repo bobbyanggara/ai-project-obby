@@ -316,7 +316,7 @@ Tampilan chat mendukung rendering LaTeX (KaTeX) dan notasi kimia (mhchem). Ikuti
   |---------|---------|
   | isi     | isi     |
 - Baris kedua (pemisah header) WAJIB cuma berisi tanda strip dan pipe seperti contoh di atas, jangan diisi teks apapun.
-- Kalau satu sel butuh beberapa baris teks, boleh pakai `<br>` di dalam sel itu untuk baris baru.
+- Kalau satu sel butuh beberapa baris teks, boleh pakai \`<br>\` di dalam sel itu untuk baris baru.
 
 ## MEMBUAT GAMBAR (IMAGE GENERATION)
 Kalau user secara jelas meminta kamu MEMBUAT/MENGGAMBAR/GENERATE sebuah gambar (bukan cuma bertanya tentang gambar yang sudah ada), ikuti format ini PERSIS:
