@@ -8,7 +8,6 @@ const I18N = {
 
     history: 'Riwayat',
     clearAll: 'Hapus semua riwayat',
-    clearPartial: 'Hapus sebagian',
     emptyTitle: 'Halo, ada yang bisa dibantu?',
     emptySubtitle: 'Tanyakan apa saja — dari ide, kode, sampai obrolan santai.',
 
@@ -21,6 +20,9 @@ const I18N = {
     hint: 'Obby adalah AI dan bisa melakukan kesalahan.',
     copy: 'Salin',
     copied: 'Disalin ke clipboard',
+    imageOnlyDefaultText: 'Tolong lihat dan jelaskan gambar ini.',
+    errorNotImage: 'File yang dipilih bukan gambar',
+    errorImageProcess: 'Gagal memproses gambar, coba file lain',
     editTitle: 'Edit judul',
     titleSaved: 'Judul disimpan',
     clearedAll: 'Semua riwayat dihapus',
@@ -41,10 +43,10 @@ const I18N = {
     tooltipTheme: 'Ganti tema terang/gelap',
     tooltipLang: 'Ganti bahasa',
     tooltipClearAll: 'Hapus semua riwayat obrolan',
-    tooltipClearPartial: 'Hapus sebagian riwayat (sisa 3 obrolan terbaru)',
     tooltipChatOptions: 'Opsi obrolan',
     tooltipRegen: 'Buat ulang jawaban',
     tooltipSend: 'Kirim pesan',
+    tooltipAttachImage: 'Lampirkan gambar',
     tooltipScrollDown: 'Ke pesan terbaru',
     systemPrompt:
 'Kamu adalah OBBY AI, asisten AI yang ramah, jelas, dan membantu pengguna dalam Bahasa. Kamu dikembangkan oleh Bobby Anggara dan Partnernya Nadine Faradina Aulia, siswa SMK jurusan Rekayasa Perangkat Lunak, dengan partnernya Nadine Faradina Aulia sebagai proyek pribadi. PENTING: kamu PUNYA akses pencarian web real-time — gunakan untuk pertanyaan tentang hal yang bisa berubah (jabatan pejabat, berita terkini, harga, cuaca, hasil pertandingan, dll), jangan menjawab dari ingatan lama untuk topik semacam itu. Untuk pengetahuan umum yang tidak berubah, jawab langsung tanpa perlu mencari. Kamu dilarang menyebut dirimu sebagai ChatGPT, OpenAI, GPT, atau nama AI/perusahaan lain — kamu adalah OBBY AI, buatan Bobby Anggara.',
@@ -55,7 +57,6 @@ const I18N = {
 
     history: 'History',
     clearAll: 'Clear all history',
-    clearPartial: 'Delete part of the history',
     emptyTitle: 'Hi, what can I help with?',
     emptySubtitle: 'Ask anything — ideas, code, or just a chat.',
     sugg1: 'Explain recursion with an analogy',
@@ -66,6 +67,9 @@ const I18N = {
     hint: 'Obby is AI and can make mistakes.',
     copy: 'Copy',
     copied: 'Copied to clipboard',
+    imageOnlyDefaultText: 'Please look at and describe this image.',
+    errorNotImage: 'The selected file is not an image',
+    errorImageProcess: 'Failed to process the image, try another file',
     editTitle: 'Edit title',
     titleSaved: 'Title saved',
     clearedAll: 'All history cleared',
@@ -86,10 +90,10 @@ const I18N = {
     tooltipTheme: 'Toggle light/dark theme',
     tooltipLang: 'Change language',
     tooltipClearAll: 'Clear all chat history',
-    tooltipClearPartial: 'Delete part of the history (keep the latest 3 conversations)',
     tooltipChatOptions: 'Chat options',
     tooltipRegen: 'Regenerate response',
     tooltipSend: 'Send message',
+    tooltipAttachImage: 'Attach image',
     tooltipScrollDown: 'Jump to latest message',
     systemPrompt:
       'You are OBBY AI, a friendly and clear AI assistant that helps users in Bahasa. You were developed by Bobby Anggara—a vocational high school student majoring in Software Engineering—and his partner, Nadine Faradina Aulia, as a personal project. IMPORTANT: You HAVE access to real-time web search—use it for questions about things that change (official positions, breaking news, prices, weather, match results, etc.); do not answer from outdated memory for such topics. For general knowledge that does not change, answer directly without searching. You are prohibited from referring to yourself as ChatGPT, OpenAI, GPT, or any other AI or company name—you are OBBY AI, created by Bobby Anggara.'
@@ -295,6 +299,11 @@ const emptyState = document.getElementById('emptyState');
 const chatForm = document.getElementById('chatForm');
 const userInput = document.getElementById('userInput');
 const sendBtn = document.getElementById('sendBtn');
+const attachImageBtn = document.getElementById('attachImageBtn');
+const imageInput = document.getElementById('imageInput');
+const imagePreviewWrap = document.getElementById('imagePreviewWrap');
+const imagePreviewThumb = document.getElementById('imagePreviewThumb');
+const removeImageBtn = document.getElementById('removeImageBtn');
 const newChatBtn = document.getElementById('newChatBtn');
 const historyList = document.getElementById('historyList');
 const chatTitle = document.getElementById('chatTitle');
@@ -524,6 +533,12 @@ langToggle.addEventListener('click', () => {
 
   // Update greeting text based on current local time & nama user (kalau login).
   updateGreetingText();
+
+  // Update outer buttons immediately on language toggle.
+
+  if (clearPartialBtn) {
+    clearPartialBtn.textContent = currentLang === 'id' ? 'Hapus sebagian' : 'Delete part of the history';
+  }
 
   applyI18n();
   renderMessages();
@@ -953,6 +968,12 @@ function showPartialDeleteModal() {
 
   // simple modal inline (tanpa dependency CSS khusus)
 
+  // Update outer buttons too (the "Hapus sebagian" button label in sidebar).
+  // Ensure it changes when language toggles.
+  if (clearPartialBtn) {
+    clearPartialBtn.textContent = currentLang === 'id' ? 'Hapus sebagian' : 'Delete part of the history';
+  }
+
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
 
@@ -1184,7 +1205,17 @@ function buildMessageRow(msg) {
   col.className = 'msg-bubble-col';
   const bubble = document.createElement('div');
   bubble.className = 'msg-bubble';
-  bubble.innerHTML = renderMarkdown(msg.content);
+  if (msg.image) {
+    const img = document.createElement('img');
+    img.src = msg.image;
+    img.className = 'attached-image';
+    img.alt = 'Gambar terlampir';
+    img.addEventListener('click', () => window.open(msg.image, '_blank'));
+    bubble.appendChild(img);
+  }
+  const textWrap = document.createElement('div');
+  textWrap.innerHTML = renderMarkdown(msg.content);
+  bubble.appendChild(textWrap);
   renderMathIn(bubble);
   col.appendChild(bubble);
 
@@ -1231,14 +1262,26 @@ function removeTypingRow() { const row = document.getElementById('typingRow'); i
 async function sendMessage(text) {
   let conv = getCurrentConversation();
   if (!conv) { createNewConversation(false); conv = getCurrentConversation(); }
-  conv.messages.push({ role: 'user', content: text, time: Date.now() });
+  const newMsg = { role: 'user', content: text, time: Date.now() };
+  if (pendingImage) {
+    newMsg.image = pendingImage.previewUrl; // disimpan sebagai data URL, dipakai buat tampilan bubble
+  }
+  conv.messages.push(newMsg);
   if (conv.title === t('newChat') || conv.title === 'Obrolan baru' || conv.title === 'New chat') {
     conv.title = text.slice(0, 32) + (text.length > 32 ? '…' : '');
   }
+  clearPendingImage();
   saveConversations();
   renderHistory();
   renderMessages();
   await requestAIReply(conv);
+}
+
+// Ubah data URL (data:image/jpeg;base64,xxxx) balik jadi {mimeType, data} buat dikirim ke API.
+function dataUrlToImagePayload(dataUrl) {
+  const match = /^data:(.+);base64,(.+)$/.exec(dataUrl || '');
+  if (!match) return null;
+  return { mimeType: match[1], data: match[2] };
 }
 
 async function requestAIReply(conv) {
@@ -1246,12 +1289,18 @@ async function requestAIReply(conv) {
   sendBtn.disabled = true;
   appendTypingRow();
   try {
+    // Ambil gambar dari pesan user PALING TERAKHIR (kalau ada) buat dikirim ke AI.
+    // Ini juga otomatis kepakai lagi saat "Regenerate" karena baca dari riwayat pesan.
+    const lastUserMsg = [...conv.messages].reverse().find((m) => m.role === 'user');
+    const imagePayload = lastUserMsg && lastUserMsg.image ? dataUrlToImagePayload(lastUserMsg.image) : null;
+
     const response = await fetch(BACKEND_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         messages: conv.messages.map(({ role, content }) => ({ role, content })),
-       systemPrompt: t('systemPrompt'),
+        systemPrompt: t('systemPrompt'),
+        ...(imagePayload ? { image: imagePayload } : {}),
       }),
     });
 
@@ -1393,11 +1442,77 @@ chatForm.addEventListener('submit', (e) => {
   e.preventDefault();
   if (isGenerating) return;
   const text = userInput.value.trim();
-  if (!text) return;
+  if (!text && !pendingImage) return;
   userInput.value = '';
   userInput.style.height = 'auto';
-  sendMessage(text);
+  sendMessage(text || t('imageOnlyDefaultText'));
 });
+
+// ---------- Lampiran gambar ----------
+let pendingImage = null; // { mimeType, data (base64 tanpa prefix), previewUrl (data URL lengkap) }
+const MAX_IMAGE_DIMENSION = 1024; // px, di-resize biar payload gak kegedean
+
+function clearPendingImage() {
+  pendingImage = null;
+  imageInput.value = '';
+  imagePreviewWrap.style.display = 'none';
+  imagePreviewThumb.src = '';
+}
+
+function resizeImageFile(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        let { width, height } = img;
+        if (width > MAX_IMAGE_DIMENSION || height > MAX_IMAGE_DIMENSION) {
+          const scale = MAX_IMAGE_DIMENSION / Math.max(width, height);
+          width = Math.round(width * scale);
+          height = Math.round(height * scale);
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.82);
+        resolve(dataUrl);
+      };
+      img.onerror = reject;
+      img.src = reader.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+if (attachImageBtn) {
+  attachImageBtn.addEventListener('click', () => imageInput.click());
+}
+if (imageInput) {
+  imageInput.addEventListener('change', async () => {
+    const file = imageInput.files[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      showToast(t('errorNotImage'));
+      imageInput.value = '';
+      return;
+    }
+    try {
+      const previewUrl = await resizeImageFile(file);
+      const payload = dataUrlToImagePayload(previewUrl);
+      pendingImage = { ...payload, previewUrl };
+      imagePreviewThumb.src = previewUrl;
+      imagePreviewWrap.style.display = 'inline-flex';
+    } catch (err) {
+      showToast(t('errorImageProcess'));
+    }
+  });
+}
+if (removeImageBtn) {
+  removeImageBtn.addEventListener('click', clearPendingImage);
+}
 
 function updateSendButtonState() {
   const hasTyping = userInput.value.trim().length >= 1;

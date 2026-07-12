@@ -2,11 +2,28 @@
 // "groq/compound" adalah sistem dari Groq yang otomatis melakukan web search
 // kalau pertanyaan butuh info terkini (real-time), tanpa perlu setup tambahan.
 // Masih dalam free tier Groq yang sama, cuma beda nama model.
-async function callGroq(messages, finalSystemPrompt, model) {
+async function callGroq(messages, finalSystemPrompt, model, image) {
   const MAX_ATTEMPTS = 3;
   const TIMEOUT_MS = 25000; // 25 detik, compound bisa lebih lambat karena web search
 
   let lastErr;
+
+  // Kalau ada gambar, ubah pesan TERAKHIR (harus dari user) jadi format multimodal
+  // ala OpenAI: content berupa array [{type:'text'}, {type:'image_url'}].
+  const preparedMessages = image
+    ? messages.map((m, idx) => {
+        if (idx === messages.length - 1 && m.role === 'user') {
+          return {
+            role: 'user',
+            content: [
+              { type: 'text', text: m.content },
+              { type: 'image_url', image_url: { url: `data:${image.mimeType};base64,${image.data}` } },
+            ],
+          };
+        }
+        return m;
+      })
+    : messages;
 
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
     const controller = new AbortController();
@@ -21,7 +38,7 @@ async function callGroq(messages, finalSystemPrompt, model) {
         },
         body: JSON.stringify({
           model,
-          messages: [{ role: 'system', content: finalSystemPrompt }, ...messages],
+          messages: [{ role: 'system', content: finalSystemPrompt }, ...preparedMessages],
         }),
         signal: controller.signal,
       });
@@ -80,16 +97,22 @@ async function callGroq(messages, finalSystemPrompt, model) {
 }
 
 // ---------- Gemini (provider cadangan) ----------
-async function callGemini(messages, finalSystemPrompt) {
+async function callGemini(messages, finalSystemPrompt, image) {
   const model = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
   const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${process.env.GEMINI_API_KEY}`;
 
-  const contents = messages
-    .filter((m) => m.role !== 'system')
-    .map((m) => ({
+  const userMessages = messages.filter((m) => m.role !== 'system');
+  const contents = userMessages.map((m, idx) => {
+    const parts = [{ text: m.content }];
+    // Sisipkan gambar (inline_data base64) ke pesan user TERAKHIR aja.
+    if (image && idx === userMessages.length - 1 && m.role === 'user') {
+      parts.push({ inline_data: { mime_type: image.mimeType, data: image.data } });
+    }
+    return {
       role: m.role === 'assistant' ? 'model' : 'user',
-      parts: [{ text: m.content }],
-    }));
+      parts,
+    };
+  });
 
   // Aktifkan grounding search Gemini secara default supaya fallback tetap dapat info
   // terkini, bukan cuma pengetahuan lama modelnya. Bisa dimatikan lewat .env kalau perlu.
@@ -230,7 +253,7 @@ module.exports = async (req, res) => {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
-    const { messages, systemPrompt } = req.body;
+    const { messages, systemPrompt, image } = req.body;
     if (!Array.isArray(messages) || messages.length === 0) {
       return res.status(400).json({ error: 'messages harus berupa array dan tidak boleh kosong' });
     }
@@ -298,28 +321,37 @@ Tampilan chat mendukung rendering LaTeX (KaTeX) dan notasi kimia (mhchem). Ikuti
 - Jika kamu benar-benar tidak menemukan informasi yang dicari atau ada kendala teknis, akui dengan jujur — jangan mengarang jawaban.
 - Jangan memberikan klaim yang terdengar pasti untuk hal yang sifatnya prediksi atau belum terjadi.`;
     // Model Groq utama: default ke "groq/compound" supaya info real-time otomatis aktif.
-    const groqModel = process.env.GROQ_MODEL || 'groq/compound-mini';
+    // Kalau ada gambar terlampir, WAJIB pakai model vision (compound-mini gak bisa lihat gambar).
+    const groqModel = image
+      ? 'meta-llama/llama-4-scout-17b-16e-instruct'
+      : (process.env.GROQ_MODEL || 'groq/compound-mini');
 
     let reply;
     let usedProvider = 'groq';
 
     try {
-      // Provider utama: Groq Compound (punya web search bawaan)
-      reply = await callGroq(messages, finalSystemPrompt, groqModel);
+      // Provider utama: Groq (Llama 4 Scout kalau ada gambar, compound kalau teks biasa)
+      reply = await callGroq(messages, finalSystemPrompt, groqModel, image);
     } catch (primaryErr) {
       console.warn(`[Fallback] Groq gagal (${primaryErr.message}), coba Gemini sebagai cadangan...`);
 
       let geminiErr = null;
       if (process.env.GEMINI_API_KEY) {
         try {
-          reply = await callGemini(messages, finalSystemPrompt);
+          reply = await callGemini(messages, finalSystemPrompt, image);
           usedProvider = 'gemini';
         } catch (err) {
           geminiErr = err;
-          console.warn(`[Fallback] Gemini juga gagal (${err.message}), coba OpenRouter sebagai cadangan terakhir...`);
+          console.warn(`[Fallback] Gemini juga gagal (${err.message})${image ? '' : ', coba OpenRouter sebagai cadangan terakhir...'}`);
         }
       } else {
-        console.warn('[Fallback] GEMINI_API_KEY tidak diset, lanjut coba OpenRouter...');
+        console.warn('[Fallback] GEMINI_API_KEY tidak diset' + (image ? '.' : ', lanjut coba OpenRouter...'));
+      }
+
+      // OpenRouter (openrouter/free) gak reliable buat vision, jadi kalau ada gambar
+      // dan Groq+Gemini udah gagal dua-duanya, langsung lempar error -- gak usah coba OpenRouter.
+      if (reply === undefined && image) {
+        throw geminiErr || primaryErr;
       }
 
       if (reply === undefined) {
