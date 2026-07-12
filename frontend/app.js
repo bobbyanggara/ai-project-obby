@@ -422,6 +422,31 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
+// ---------- Lightbox gambar ----------
+const imageLightbox = document.getElementById('imageLightbox');
+const imageLightboxImg = document.getElementById('imageLightboxImg');
+const imageLightboxClose = document.getElementById('imageLightboxClose');
+
+function openImageLightbox(src) {
+  if (!imageLightbox || !imageLightboxImg) return;
+  imageLightboxImg.src = src;
+  imageLightbox.classList.add('open');
+}
+function closeImageLightbox() {
+  if (imageLightbox) imageLightbox.classList.remove('open');
+}
+if (imageLightboxClose) imageLightboxClose.addEventListener('click', closeImageLightbox);
+if (imageLightbox) {
+  imageLightbox.addEventListener('click', (e) => {
+    if (e.target === imageLightbox) closeImageLightbox();
+  });
+}
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && imageLightbox && imageLightbox.classList.contains('open')) {
+    closeImageLightbox();
+  }
+});
+
 // ---------- Modal edit profil ----------
 const editProfileBtn = document.getElementById('editProfileBtn');
 const editProfileBackdrop = document.getElementById('editProfileBackdrop');
@@ -1210,7 +1235,7 @@ function buildMessageRow(msg) {
     img.src = msg.image;
     img.className = 'attached-image';
     img.alt = 'Gambar terlampir';
-    img.addEventListener('click', () => window.open(msg.image, '_blank'));
+    img.addEventListener('click', () => openImageLightbox(msg.image));
     bubble.appendChild(img);
   }
   const textWrap = document.createElement('div');
