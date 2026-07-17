@@ -1492,7 +1492,6 @@ async function requestAIReply(conv) {
   }
 }
 
-// ---------- Regenerate ----------
 regenBtn.addEventListener('click', async () => {
   if (isGenerating) return;
   const conv = getCurrentConversation();
