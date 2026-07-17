@@ -1678,7 +1678,6 @@ if (removeImageBtn) {
 
 function updateSendButtonState() {
   const hasTyping = userInput.value.trim().length >= 1;
-  // If not typing anything (or just spaces), make button slightly dim.
   sendBtn.style.opacity = hasTyping ? '' : '0.35';
   sendBtn.style.filter = hasTyping ? '' : 'brightness(0.9)';
   sendBtn.disabled = isGenerating ? true : false;
