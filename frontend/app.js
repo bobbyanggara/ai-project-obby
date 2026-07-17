@@ -344,8 +344,16 @@ let currentConvId = null;
 let isGenerating = false;
 
 let syncTimer = null;
+let localSaveTimer = null;
+// PENTING (perf): JSON.stringify(conversations) bisa jadi besar (riwayat panjang + gambar
+// base64 terlampir), dan itu operasi SINKRON yang nge-block main thread. Kalau saveConversations()
+// dipanggil berkali-kali berurutan (mis. star lalu rename lalu kirim pesan dalam waktu singkat),
+// kita cuma perlu nulis ke localStorage SEKALI di akhir, bukan tiap panggilan.
 function saveConversations() {
-  localStorage.setItem('conversations', JSON.stringify(conversations));
+  clearTimeout(localSaveTimer);
+  localSaveTimer = setTimeout(() => {
+    localStorage.setItem('conversations', JSON.stringify(conversations));
+  }, 250);
 
   // Kalau user sedang login, sinkronkan juga ke server (di-debounce 1.2 detik
   // biar tidak spam request tiap kali saveConversations() dipanggil).
@@ -357,6 +365,13 @@ function saveConversations() {
   }
 }
 function getCurrentConversation() { return conversations.find((c) => c.id === currentConvId); }
+
+// Jaga-jaga: kalau tab ditutup/refresh persis di dalam jeda debounce (250ms) di atas,
+// paksa tulis langsung supaya perubahan terakhir tidak hilang.
+window.addEventListener('pagehide', () => {
+  clearTimeout(localSaveTimer);
+  localStorage.setItem('conversations', JSON.stringify(conversations));
+});
 
 // ---------- Auth UI & sinkronisasi awal ----------
 function updateAuthUI(user) {
@@ -616,7 +631,7 @@ langToggle.addEventListener('click', () => {
   }
 
   applyI18n();
-  renderMessages();
+  updateMessageActionLabels();
   renderSuggestions();
 
 });
@@ -781,22 +796,63 @@ function renderMarkdown(rawText) {
 // Render rumus matematika/fisika/kimia (LaTeX) di dalam elemen tertentu pakai KaTeX,
 // kalau library-nya sudah termuat. Support delimiter $...$, $$...$$, \(...\), \[...\]
 // -- ini yang paling umum dipakai model AI buat notasi matematika, fisika, maupun kimia (mhchem-style).
-function renderMathIn(el) {
-  if (!window.renderMathInElement) return;
-  try {
-    window.renderMathInElement(el, {
-      delimiters: [
-        { left: '$$', right: '$$', display: true },
-        { left: '\\[', right: '\\]', display: true },
-        { left: '\\(', right: '\\)', display: false },
-        { left: '$', right: '$', display: false },
-      ],
-      throwOnError: false, // kalau ada notasi yang gagal di-parse, tampilkan teks asli aja, jangan bikin halaman error
-      strict: false,
-    });
-  } catch (err) {
-    console.warn('KaTeX render gagal, fallback ke teks biasa:', err);
-  }
+//
+// PENTING (perf): KaTeX (JS+CSS gabungan ~300KB) DULU dimuat di setiap halaman lewat <head>,
+// padahal kebanyakan chat sehari-hari tidak mengandung rumus sama sekali. Sekarang library-nya
+// baru dimuat (sekali saja, lalu di-cache browser) begitu ada pesan yang BENAR-BENAR
+// mengandung delimiter matematika -- jadi pengguna yang cuma ngobrol biasa tidak perlu
+// menanggung biaya loading itu sama sekali.
+const MATH_DELIMITER_RE = /\$\$[\s\S]+?\$\$|\\\[[\s\S]+?\\\]|\\\([\s\S]+?\\\)|\$[^\n$]+\$/;
+let katexLoadPromise = null;
+
+function loadKatexOnce() {
+  if (katexLoadPromise) return katexLoadPromise;
+  katexLoadPromise = new Promise((resolve) => {
+    const cssLink = document.createElement('link');
+    cssLink.rel = 'stylesheet';
+    cssLink.href = 'https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css';
+    document.head.appendChild(cssLink);
+
+    const coreScript = document.createElement('script');
+    coreScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js';
+    coreScript.onload = () => {
+      const autoRenderScript = document.createElement('script');
+      autoRenderScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js';
+      autoRenderScript.onload = () => {
+        const mhchemScript = document.createElement('script');
+        mhchemScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/mhchem.min.js';
+        mhchemScript.onload = () => resolve(true);
+        mhchemScript.onerror = () => resolve(false);
+        document.head.appendChild(mhchemScript);
+      };
+      autoRenderScript.onerror = () => resolve(false);
+      document.head.appendChild(autoRenderScript);
+    };
+    coreScript.onerror = () => resolve(false);
+    document.head.appendChild(coreScript);
+  });
+  return katexLoadPromise;
+}
+
+function renderMathIn(el, rawText) {
+  if (!MATH_DELIMITER_RE.test(rawText || '')) return; // tidak ada notasi matematika, tidak perlu KaTeX sama sekali
+  loadKatexOnce().then((loaded) => {
+    if (!loaded || !window.renderMathInElement) return;
+    try {
+      window.renderMathInElement(el, {
+        delimiters: [
+          { left: '$$', right: '$$', display: true },
+          { left: '\\[', right: '\\]', display: true },
+          { left: '\\(', right: '\\)', display: false },
+          { left: '$', right: '$', display: false },
+        ],
+        throwOnError: false, // kalau ada notasi yang gagal di-parse, tampilkan teks asli aja, jangan bikin halaman error
+        strict: false,
+      });
+    } catch (err) {
+      console.warn('KaTeX render gagal, fallback ke teks biasa:', err);
+    }
+  });
 }
 
 // Event delegation buat tombol "Salin" di kotak kode (dipasang sekali, kerja buat semua bubble termasuk yang baru muncul nanti).
@@ -1213,6 +1269,19 @@ function formatTime(ts) {
   return d.toLocaleTimeString(currentLang === 'id' ? 'id-ID' : 'en-US', { hour: '2-digit', minute: '2-digit' });
 }
 
+// PENTING (perf): dipakai saat ganti bahasa. renderMessages() penuh akan mem-parse ulang
+// markdown + KaTeX SEMUA pesan di percakapan aktif -- mahal untuk chat yang panjang, padahal
+// isi pesannya sendiri tidak berubah, cuma label "Salin/Copy" dan format jam yang perlu ikut
+// bahasa. Jadi cukup update dua hal itu langsung di DOM yang sudah ada.
+function updateMessageActionLabels() {
+  document.querySelectorAll('.msg-actions button.msg-action-btn').forEach((btn) => {
+    btn.textContent = t('copy');
+  });
+  document.querySelectorAll('.msg-actions span.msg-action-btn[data-time]').forEach((span) => {
+    span.textContent = formatTime(Number(span.dataset.time));
+  });
+}
+
 // ---------- Message rendering ----------
 function renderMessages() {
   messagesEl.innerHTML = '';
@@ -1302,7 +1371,7 @@ function buildMessageRow(msg) {
   const textWrap = document.createElement('div');
   textWrap.innerHTML = renderMarkdown(msg.content);
   bubble.appendChild(textWrap);
-  renderMathIn(bubble);
+  renderMathIn(bubble, msg.content);
   col.appendChild(bubble);
 
   const actions = document.createElement('div');
@@ -1318,6 +1387,7 @@ function buildMessageRow(msg) {
     const meta = document.createElement('span');
     meta.className = 'msg-action-btn';
     meta.style.cursor = 'default';
+    meta.dataset.time = String(msg.time);
     meta.textContent = formatTime(msg.time);
     actions.appendChild(meta);
   }
