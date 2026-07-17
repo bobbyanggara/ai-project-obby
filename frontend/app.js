@@ -1598,7 +1598,6 @@ if (deleteChatBtn) {
   });
 }
 
-// ---------- Form events ----------
 chatForm.addEventListener('submit', (e) => {
   e.preventDefault();
   if (isGenerating) return;
