@@ -1225,7 +1225,18 @@ function renderMessages() {
     return;
   }
   regenBtn.style.visibility = conv.messages.some((m) => m.role === 'assistant') ? 'visible' : 'hidden';
-  conv.messages.forEach((msg) => messagesEl.appendChild(buildMessageRow(msg)));
+  const fragment = document.createDocumentFragment();
+  conv.messages.forEach((msg) => fragment.appendChild(buildMessageRow(msg)));
+  messagesEl.appendChild(fragment);
+}
+
+// Nambah 1 pesan baru tanpa rebuild seluruh chat (dipakai sendMessage & requestAIReply
+// biar gak parse ulang markdown+KaTeX semua pesan lama tiap ada pesan baru).
+function appendMessageRow(msg) {
+  if (messagesEl.contains(emptyState)) emptyState.remove();
+  regenBtn.style.visibility = 'visible';
+  messagesEl.appendChild(buildMessageRow(msg));
+  scrollToBottom({ smooth: true });
 }
 
 const scrollState = {
@@ -1348,7 +1359,7 @@ async function sendMessage(text) {
   clearPendingImage();
   saveConversations();
   renderHistory();
-  renderMessages();
+  appendMessageRow(newMsg);
   await requestAIReply(conv);
 }
 
@@ -1398,12 +1409,13 @@ async function requestAIReply(conv) {
     if (data.generatedImage) assistantMsg.image = data.generatedImage;
     conv.messages.push(assistantMsg);
     saveConversations();
-    renderMessages();
+    appendMessageRow(assistantMsg);
   } catch (err) {
     removeTypingRow();
-    conv.messages.push({ role: 'assistant', content: `⚠️ ${t('errorPrefix')}: ${err.message}`, time: Date.now() });
+    const errMsg = { role: 'assistant', content: `⚠️ ${t('errorPrefix')}: ${err.message}`, time: Date.now() };
+    conv.messages.push(errMsg);
     saveConversations();
-    renderMessages();
+    appendMessageRow(errMsg);
   } finally {
     isGenerating = false;
     sendBtn.disabled = false;
