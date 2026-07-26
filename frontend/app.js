@@ -735,14 +735,14 @@ function renderMarkdown(rawText) {
     if (line.includes('|') && i + 1 < lines.length && isTableSeparatorLine(lines[i + 1])) {
       closeLists();
       const headerCells = parseTableRow(line);
-      html += '<table><thead><tr>' + headerCells.map((c) => `<th>${inlineFormat(c)}</th>`).join('') + '</tr></thead><tbody>';
+      html += '<div class="table-scroll"><table><thead><tr>' + headerCells.map((c) => `<th>${inlineFormat(c)}</th>`).join('') + '</tr></thead><tbody>';
       i += 2; // lewati baris header & separator
       while (i < lines.length && lines[i].includes('|') && lines[i].trim() !== '') {
         const rowCells = parseTableRow(lines[i]);
         html += '<tr>' + rowCells.map((c) => `<td>${inlineFormat(c)}</td>`).join('') + '</tr>';
         i++;
       }
-      html += '</tbody></table>';
+      html += '</tbody></table></div>';
       i--; // kompensasi karena for-loop bakal nambah i lagi di iterasi berikutnya
       continue;
     }

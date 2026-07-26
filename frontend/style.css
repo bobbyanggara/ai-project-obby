@@ -76,28 +76,26 @@ textarea { font-family: inherit; }
 .blob {
   position: absolute;
   border-radius: 50%;
-  filter: blur(70px);
+  filter: blur(46px);
   opacity: var(--blob-op);
   will-change: transform;
 }
 .blob-1 {
-  width: 520px; height: 520px;
+  width: 460px; height: 460px;
   background: #3b82f6;
   top: -120px; left: -100px;
   animation: drift1 22s ease-in-out infinite;
 }
 .blob-2 {
-  width: 460px; height: 460px;
+  width: 400px; height: 400px;
   background: #22d3ee;
   bottom: -140px; right: -80px;
   animation: drift2 26s ease-in-out infinite;
 }
-.blob-3 {
-  width: 380px; height: 380px;
-  background: #6366f1;
-  top: 40%; left: 50%;
-  animation: drift3 30s ease-in-out infinite;
-}
+/* blob-3 dimatikan total (bukan cuma di mobile) -- 3 layer blur(70px) yang jalan
+   terus-menerus adalah biaya GPU terbesar di halaman ini, sementara efeknya ke
+   tampilan minim karena ketutup 2 blob lain + konten di atasnya. */
+.blob-3 { display: none; }
 @keyframes drift1 {
   0%, 100% { transform: translate(0,0) scale(1); }
   50% { transform: translate(80px, 60px) scale(1.15); }
@@ -116,14 +114,14 @@ textarea { font-family: inherit; }
 /* ============ GLASS UTILITY ============ */
 .glass {
   background: var(--glass-bg);
-  backdrop-filter: blur(14px) saturate(140%);
-  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  backdrop-filter: blur(9px) saturate(130%);
+  -webkit-backdrop-filter: blur(9px) saturate(130%);
   border: 1px solid var(--glass-border);
 }
 .glass-inset {
   background: var(--glass-bg-strong);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
   border: 1px solid var(--glass-border);
 }
 
@@ -383,8 +381,8 @@ textarea { font-family: inherit; }
   padding: 6px;
   display: flex; flex-direction: column; gap: 2px;
   box-shadow: 0 18px 40px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.14);
-  backdrop-filter: blur(11px) saturate(150%);
-  -webkit-backdrop-filter: blur(11px) saturate(150%);
+  backdrop-filter: blur(7px) saturate(150%);
+  -webkit-backdrop-filter: blur(7px) saturate(150%);
   z-index: 30;
   opacity: 0;
   transform: translateY(-6px) scale(0.98);
@@ -424,8 +422,8 @@ textarea { font-family: inherit; }
     0 10px 26px rgba(0,0,0,0.18),
     inset 0 1px 0 rgba(255,255,255,0.36),
     inset 0 -1px 0 rgba(255,255,255,0.08);
-  backdrop-filter: blur(6px) saturate(135%);
-  -webkit-backdrop-filter: blur(6px) saturate(135%);
+  backdrop-filter: blur(4px) saturate(135%);
+  -webkit-backdrop-filter: blur(4px) saturate(135%);
   transition: transform 0.15s, background 0.15s, color 0.15s, border-color 0.15s;
 }
 .icon-btn:hover {
@@ -465,8 +463,8 @@ textarea { font-family: inherit; }
     0 10px 26px rgba(0,0,0,0.30),
     0 0 0 1px rgba(59,130,246,0.12),
     inset 0 1px 0 rgba(255,255,255,0.22);
-  backdrop-filter: blur(10px) saturate(150%);
-  -webkit-backdrop-filter: blur(10px) saturate(150%);
+  backdrop-filter: blur(6px) saturate(150%);
+  -webkit-backdrop-filter: blur(6px) saturate(150%);
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.18s ease, transform 0.18s ease, background 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, color 0.18s ease;
@@ -522,8 +520,8 @@ textarea { font-family: inherit; }
   background: rgba(255,255,255,0.045);
   border: 1px solid rgba(255,255,255,0.16);
   box-shadow: none;
-  backdrop-filter: blur(7px) saturate(125%);
-  -webkit-backdrop-filter: blur(7px) saturate(125%);
+  backdrop-filter: blur(5px) saturate(125%);
+  -webkit-backdrop-filter: blur(5px) saturate(125%);
 }
 
 @keyframes msg-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
@@ -531,8 +529,20 @@ textarea { font-family: inherit; }
 .msg-row { display: flex; gap: 12px; animation: msg-in 0.18s ease-out; }
 
 .msg-row.user { flex-direction: row-reverse; }
-.msg-bubble-col { display: flex; flex-direction: column; gap: 6px; max-width: calc(100% - 44px); }
+/* Lebar bubble: fluid (persentase + batas atas), nyesuaiin otomatis ke lebar
+   layar tanpa loncat-loncat di tiap breakpoint. */
+.msg-bubble-col { display: flex; flex-direction: column; gap: 6px; max-width: min(90%, 640px); }
 .msg-row.user .msg-bubble-col { align-items: flex-end; }
+
+/* Bubble yang isinya tabel atau blok kode dikasih ruang jauh lebih lebar secara
+   OTOMATIS (dicek dari isi bubble-nya lewat :has(), bukan breakpoint tetap) --
+   supaya tabel/kode gak kepepet sempit di HP kecil maupun harus ke-scroll parah
+   di desktop lebar. Spesifisitas :has() lebih tinggi dari .msg-bubble-col biasa,
+   jadi ini otomatis menang di semua ukuran layar termasuk di dalam media query lain. */
+.msg-bubble-col:has(table),
+.msg-bubble-col:has(pre) {
+  max-width: min(96%, 760px);
+}
 .msg-meta { font-family: var(--font-mono); font-size: 10.5px; color: var(--text-faint); padding: 0 4px; }
 
 .msg-bubble {
@@ -623,9 +633,15 @@ textarea { font-family: inherit; }
     0 18px 48px rgba(0,0,0,0.24),
     inset 0 1px 0 rgba(255,255,255,0.34),
     inset 0 -1px 0 rgba(255,255,255,0.08);
-  backdrop-filter: blur(6px) saturate(145%);
-  -webkit-backdrop-filter: blur(6px) saturate(145%);
+  /* Sengaja TANPA backdrop-filter di sini: elemen ini posisinya fixed nempel
+     di atas .messages yang terus di-scroll, jadi kalau pakai blur browser
+     bakal re-render blur itu di SETIAP frame scroll -- ini penyumbang jank
+     terbesar di HP low-end. Background di atas sudah solid-ish jadi efek
+     glass-nya tetap kelihatan tanpa biaya itu. */
+  background-color: var(--bg-deep);
 }
+[data-theme="dark"] .chat-input-form { background-color: rgba(10,14,26,0.82); }
+[data-theme="light"] .chat-input-form { background-color: rgba(255,255,255,0.75); }
 #userInput {
   flex: 1;
   resize: none;
@@ -661,8 +677,8 @@ textarea { font-family: inherit; }
   box-shadow:
     inset 0 1px 0 rgba(255,255,255,0.3),
     0 8px 22px rgba(0,0,0,0.16);
-  backdrop-filter: blur(5px) saturate(135%);
-  -webkit-backdrop-filter: blur(5px) saturate(135%);
+  backdrop-filter: blur(4px) saturate(135%);
+  -webkit-backdrop-filter: blur(4px) saturate(135%);
 }
 
 .send-btn svg { display: block; width: 17px; height: 17px; flex-shrink: 0; }
@@ -681,8 +697,8 @@ textarea { font-family: inherit; }
     0 8px 22px rgba(0,0,0,0.14),
     inset 0 1px 0 rgba(255,255,255,0.3),
     inset 0 -1px 0 rgba(255,255,255,0.07);
-  backdrop-filter: blur(5px) saturate(135%);
-  -webkit-backdrop-filter: blur(5px) saturate(135%);
+  backdrop-filter: blur(4px) saturate(135%);
+  -webkit-backdrop-filter: blur(4px) saturate(135%);
   transition: transform 0.15s, background 0.15s, border-color 0.15s, color 0.15s;
 }
 
@@ -703,7 +719,7 @@ textarea { font-family: inherit; }
 /* ============ TOAST ============ */
 .toast {
   position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px);
-  background: var(--glass-bg-strong); backdrop-filter: blur(12px);
+  background: var(--glass-bg-strong); backdrop-filter: blur(8px);
   border: 1px solid var(--glass-border); color: var(--text-primary);
   padding: 10px 18px; border-radius: var(--radius-md); font-size: 13px;
   opacity: 0; pointer-events: none; transition: opacity 0.2s, transform 0.2s; z-index: 100;
@@ -723,7 +739,6 @@ textarea { font-family: inherit; }
   .sidebar-close { display: flex; }
   .menu-btn { display: flex; }
   .suggestions { grid-template-columns: 1fr; }
-  .msg-bubble-col { max-width: calc(100% - 36px); }
   .chat-header { top: 10px; left: 10px; right: 10px; }
   .messages { padding-bottom: 132px; }
   .composer-wrap {
@@ -731,9 +746,6 @@ textarea { font-family: inherit; }
     padding-left: 10px;
     padding-right: 10px;
   }
-  /* Perf: matikan 1 dari 3 blob animasi di layar kecil -- di sinilah biaya
-     backdrop-filter+blur bertumpuk paling terasa (GPU mobile lebih terbatas). */
-  .blob-3 { display: none; }
 }
 
 /* Desktop: show a dedicated open button for sidebar */
@@ -763,6 +775,11 @@ textarea { font-family: inherit; }
     max-width: min(82%, 820px);
   }
 
+  .msg-bubble-col:has(table),
+  .msg-bubble-col:has(pre) {
+    max-width: min(94%, 980px);
+  }
+
   .msg-bubble {
     padding: 16px 18px;
     font-size: 15.5px;
@@ -780,6 +797,30 @@ textarea { font-family: inherit; }
     transition: none !important;
     scroll-behavior: auto !important;
   }
+}
+
+/* Device/OS bilang transparansi diminimalkan (biasanya juga sinyal device low-end
+   atau mode hemat baterai) -- matikan semua blur kaca, ganti jadi background solid. */
+@media (prefers-reduced-transparency: reduce) {
+  *, *::before, *::after {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+  .glass, .glass-inset, .sidebar, .chat-input-form, .icon-btn,
+  .title-dropdown, .toast, .floating-tooltip, .msg-action-btn,
+  .auth-tab, .auth-submit, .scroll-down-btn, .suggestion-chip {
+    background-color: var(--bg-deep);
+  }
+  [data-theme="light"] .glass, [data-theme="light"] .glass-inset,
+  [data-theme="light"] .sidebar, [data-theme="light"] .chat-input-form,
+  [data-theme="light"] .icon-btn, [data-theme="light"] .title-dropdown,
+  [data-theme="light"] .toast, [data-theme="light"] .floating-tooltip,
+  [data-theme="light"] .msg-action-btn, [data-theme="light"] .auth-tab,
+  [data-theme="light"] .auth-submit, [data-theme="light"] .scroll-down-btn,
+  [data-theme="light"] .suggestion-chip {
+    background-color: #eef3fc;
+  }
+  .blob { display: none; }
 }
 
 
@@ -900,8 +941,8 @@ button:focus-visible, textarea:focus-visible {
   pointer-events: none;
   opacity: 0;
   box-shadow: 0 10px 26px rgba(0,0,0,0.28);
-  backdrop-filter: blur(10px) saturate(150%);
-  -webkit-backdrop-filter: blur(10px) saturate(150%);
+  backdrop-filter: blur(6px) saturate(150%);
+  -webkit-backdrop-filter: blur(6px) saturate(150%);
   transition: opacity 0.15s ease, transform 0.15s ease;
 }
 [data-tooltip]:hover::after,
@@ -961,8 +1002,8 @@ button:focus-visible, textarea:focus-visible {
   opacity: 0;
   transform: translateY(4px);
   box-shadow: 0 10px 26px rgba(0,0,0,0.28);
-  backdrop-filter: blur(10px) saturate(150%);
-  -webkit-backdrop-filter: blur(10px) saturate(150%);
+  backdrop-filter: blur(6px) saturate(150%);
+  -webkit-backdrop-filter: blur(6px) saturate(150%);
   transition: opacity 0.15s ease, transform 0.15s ease;
 }
 .floating-tooltip.show { opacity: 1; transform: translateY(0); }
@@ -1200,24 +1241,35 @@ button:focus-visible, textarea:focus-visible {
   .msg-bubble ul, .msg-bubble ol { margin: 6px 0 10px; padding-left: 22px; }
   .msg-bubble li { margin: 3px 0; }
 
-  /* ---- Tabel markdown ---- */
+  /* ---- Tabel markdown ----
+     Dibungkus .table-scroll (lihat renderMarkdown di app.js) supaya scroll horizontal
+     kejadian di wrapper-nya sendiri -- konsisten di semua device, gak "kepotong diam-diam"
+     oleh overflow:hidden punya .msg-bubble. Kolom auto-size ke isinya (bukan dipaksa sama
+     rata lewat table-layout:fixed) supaya kolom pendek tetap ringkas dan kolom panjang
+     dapat ruang secukupnya, dengan scroll sebagai fallback kalau tabelnya memang lebar. */
+  .table-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin: 10px 0;
+    border-radius: var(--radius-sm);
+  }
   .msg-bubble table {
     border-collapse: collapse;
-    width: 100%;
-    margin: 10px 0;
+    width: max-content;
+    min-width: 100%;
+    margin: 0;
     font-size: 0.92em;
-    overflow-x: auto;
-    display: block;
   }
-  .msg-bubble thead, .msg-bubble tbody { display: table; width: 100%; table-layout: fixed; }
   .msg-bubble th, .msg-bubble td {
-    border: 1px solid rgba(255,255,255,0.12);
+    border: 1px solid var(--assistant-bubble-border);
     padding: 8px 10px;
     text-align: left;
     vertical-align: top;
+    white-space: normal;
+    min-width: 90px;
   }
   .msg-bubble th {
-    background: rgba(255,255,255,0.06);
+    background: var(--glass-bg);
     font-weight: 600;
   }
 
