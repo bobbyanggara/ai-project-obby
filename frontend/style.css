@@ -1427,3 +1427,7 @@ button:focus-visible, textarea:focus-visible {
     justify-content: center;
   }
   .image-lightbox-download:hover { background: rgba(255,255,255,0.2); }
+  
+body {
+  padding-top: env(safe-area-inset-top, 24px);
+}
